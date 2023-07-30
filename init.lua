@@ -189,15 +189,6 @@ require('lazy').setup({
   },
 
   {
-    -- Theme Catppuccin
-    'catppuccin/nvim',
-    priority = 1000,
-    config = function()
-      vim.cmd.colorscheme 'catppuccin'
-    end,
-  },
-
-  {
     -- Github Copilot
     "zbirenbaum/copilot.lua",
     cmd = "Copilot",
@@ -209,7 +200,20 @@ require('lazy').setup({
     end,
   },
 
-  { 'christoomey/vim-tmux-navigator' }
+  -- Null-ls to format files using prettierd
+  {
+    'jose-elias-alvarez/null-ls.nvim',
+    requires = 'nvim-lua/plenary.nvim'
+  },
+
+  {
+    -- Theme Catppuccin
+    'catppuccin/nvim',
+    priority = 999,
+    config = function()
+      vim.cmd.colorscheme 'catppuccin'
+    end,
+  },
 
   -- NOTE: Next Step on Your Neovim Journey: Add/Configure additional "plugins" for kickstart
   --       These are some example plugins that I've included in the kickstart repository.
