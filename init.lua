@@ -90,7 +90,11 @@ require('lazy').setup({
 
       -- Useful status updates for LSP
       -- NOTE: `opts = {}` is the same as calling `require('fidget').setup({})`
-      { 'j-hui/fidget.nvim',       tag = 'legacy', opts = {} },
+      {
+        'j-hui/fidget.nvim',
+        tag = 'legacy',
+        opts = {}
+      },
 
       -- Additional lua configuration, makes nvim stuff amazing!
       'folke/neodev.nvim',
@@ -200,9 +204,7 @@ require('lazy').setup({
     cmd = "Copilot",
     event = "InsertEnter",
     config = function()
-      require("copilot").setup({
-        suggestion = {}
-      })
+      require("copilot").setup({})
     end,
   },
 
@@ -216,7 +218,7 @@ require('lazy').setup({
         sources = {
           null_ls.builtins.formatting.stylua,
           null_ls.builtins.formatting.prettier,
-          null_ls.builtins.diagnostics.eslint,
+          null_ls.builtins.diagnostics.eslint_d,
         },
         on_attach = function(client, bufnr)
           if client.supports_method("textDocument/formatting") then
@@ -242,7 +244,7 @@ require('lazy').setup({
     lazy = false,
     dependencies = "nvim-tree/nvim-web-devicons",
     config = function()
-      require("nvim-tree").setup {}
+      require("nvim-tree").setup({})
     end,
 
     on_attach = function(bufnr)
