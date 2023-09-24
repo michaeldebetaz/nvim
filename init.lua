@@ -290,6 +290,7 @@ local servers = {
       "typescript.tsx",
     },
   },
+  gopls = {},
 }
 
 -- Setup neovim lua configuration
