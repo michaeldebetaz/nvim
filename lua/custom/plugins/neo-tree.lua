@@ -1,10 +1,16 @@
+vim.cmd([[ let g:neo_tree_remove_legacy_commands = 1 ]])
+
 return {
-	"nvim-tree/nvim-tree.lua",
+	-- Plugin to browse the file system and other tree like structures in whatever style suits you, including sidebars, floating windows, netrw split style, or all of them at once!
+	"nvim-neo-tree/neo-tree.nvim",
 	version = "*",
-	lazy = false,
-	dependencies = "nvim-tree/nvim-web-devicons",
+	dependencies = {
+		"nvim-lua/plenary.nvim",
+		"nvim-tree/nvim-web-devicons", -- not strictly required, but recommended
+		"MunifTanjim/nui.nvim",
+	},
 	config = function()
-		require("nvim-tree").setup({})
+		require("neo-tree").setup({})
 	end,
 
 	on_attach = function(bufnr)

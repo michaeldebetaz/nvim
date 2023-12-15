@@ -1,7 +1,7 @@
 return {
 	-- Theme Catppuccin
 	"catppuccin/nvim",
-	priority = 999,
+	priority = 1000,
 	config = function()
 		vim.cmd.colorscheme("catppuccin")
 	end,

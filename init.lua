@@ -34,7 +34,7 @@ vim.opt.rtp:prepend(lazypath)
 --  as they will be available in your neovim runtime.
 
 require("lazy").setup({
-  { import = "plugins" },
+  { import = "custom.plugins" },
 }, {})
 
 -- Set tabs spacing
@@ -72,7 +72,6 @@ vim.wo.signcolumn = "yes"
 
 -- Decrease update time
 vim.o.updatetime = 250
-vim.o.timeout = true
 vim.o.timeoutlen = 300
 
 -- Set completeopt to have a better completion experience
@@ -93,10 +92,16 @@ vim.keymap.set({ "n", "v" }, "<Space>", "<Nop>", { silent = true })
 vim.keymap.set("n", "k", "v:count == 0 ? 'gk' : 'k'", { expr = true, silent = true })
 vim.keymap.set("n", "j", "v:count == 0 ? 'gj' : 'j'", { expr = true, silent = true })
 
+-- Diagnostic keymaps
+vim.keymap.set("n", "[d", vim.diagnostic.goto_prev, { desc = "Go to previous diagnostic message" })
+vim.keymap.set("n", "]d", vim.diagnostic.goto_next, { desc = "Go to next diagnostic message" })
+vim.keymap.set("n", "<leader>e", vim.diagnostic.open_float, { desc = "Open floating diagnostic message" })
+vim.keymap.set("n", "<leader>q", vim.diagnostic.setloclist, { desc = "Open diagnostics list" })
+
 -- [[ Custom keymaps ]]
 
 vim.keymap.set("i", "jk", "<Esc>")
-vim.keymap.set("n", "<F2>", ":NvimTreeToggle<CR>", { silent = true })
+vim.keymap.set("n", "<F2>", ":Neotree toggle<CR>", { silent = true })
 
 -- [[ Highlight on yank ]]
 -- See `:help vim.highlight.on_yank()`
