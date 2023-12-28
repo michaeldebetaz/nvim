@@ -1,5 +1,5 @@
 return {
-	"jose-elias-alvarez/null-ls.nvim",
+	"nvimtools/none-ls.nvim",
 	requires = "nvim-lua/plenary.nvim",
 	config = function()
 		local null_ls = require("null-ls")
