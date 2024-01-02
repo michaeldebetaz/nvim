@@ -10,7 +10,14 @@ return {
 		"MunifTanjim/nui.nvim",
 	},
 	config = function()
-		require("neo-tree").setup({})
+		require("neo-tree").setup({
+			filesystem = {
+				filtered_items = {
+					visible = true,
+				},
+			},
+			vim.keymap.set("n", "<F2>", ":Neotree toggle<CR>", { silent = true }),
+		})
 	end,
 
 	on_attach = function(bufnr)
