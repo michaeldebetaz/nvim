@@ -42,7 +42,11 @@ return {
 					select = true,
 				}),
 				["<Tab>"] = cmp.mapping(function(fallback)
-					if cmp.visible() then
+					-- Prioritize copilot suggestions over nvim-cmp
+					local suggestion = require("copilot.suggestion")
+					if suggestion.is_visible() then
+						suggestion.accept()
+					elseif cmp.visible() then
 						cmp.select_next_item()
 					elseif luasnip.expand_or_locally_jumpable() then
 						luasnip.expand_or_jump()
