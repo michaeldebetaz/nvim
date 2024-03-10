@@ -1,9 +1,21 @@
 return {
 	-- Autocompletion
 	"hrsh7th/nvim-cmp",
+	event = "InsertEnter",
 	dependencies = {
 		-- Snippet Engine & its associated nvim-cmp source
-		"L3MON4D3/LuaSnip",
+		{
+			"L3MON4D3/LuaSnip",
+			build = (function()
+				-- Build Step is needed for regex support in snippets
+				-- This step is not supported in many windows environments
+				-- Remove the below condition to re-enable on windows
+				if vim.fn.has("win32") == 1 or vim.fn.executable("make") == 0 then
+					return
+				end
+				return "make install_jsregexp"
+			end)(),
+		},
 		"saadparwaiz1/cmp_luasnip",
 
 		-- Adds LSP completion capabilities
@@ -28,16 +40,14 @@ return {
 					luasnip.lsp_expand(args.body)
 				end,
 			},
-			completion = {
-				completeopt = "menu,menuone,noselect",
-			},
+			completion = { completeopt = "menu,menuone,noselect" },
 			window = {
 				completion = cmp.config.window.bordered(),
 				documentation = cmp.config.window.bordered(),
 			},
 			mapping = cmp.mapping.preset.insert({
-				["<C-n>"] = cmp.mapping.select_next_item(),
-				["<C-p>"] = cmp.mapping.select_prev_item(),
+				["<C-n>"] = cmp.mapping.select_next_item(), -- Select the [n]ext item
+				["<C-p>"] = cmp.mapping.select_prev_item(), -- Select the [p]revious item
 				["<C-d>"] = cmp.mapping.scroll_docs(-4),
 				["<C-f>"] = cmp.mapping.scroll_docs(4),
 				["<C-Space>"] = cmp.mapping.complete({}),

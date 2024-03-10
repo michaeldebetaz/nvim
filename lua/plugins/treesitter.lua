@@ -3,12 +3,12 @@ return {
 	"nvim-treesitter/nvim-treesitter",
 	dependencies = {
 		"nvim-treesitter/nvim-treesitter-textobjects",
-		"nvim-treesitter/playground",
 	},
 	build = ":TSUpdate",
-	config = vim.defer_fn(function()
+	config = function()
 		-- [[ Configure Treesitter ]]
 		-- See `:help nvim-treesitter`
+		---@diagnostic disable-next-line: missing-fields
 		require("nvim-treesitter.configs").setup({
 			--- Add languages to be installed here that you want installed for treesitter
 			ensure_installed = {
@@ -27,21 +27,16 @@ return {
 			},
 
 			-- Autoinstall languages that are not installed. Defaults to false (but you can change for yourself!)
-			auto_install = false,
-			-- Install languages synchronously (only applied to `ensure_installed`)
-			sync_install = false,
-			-- List of parsers to ignore installing
-			ignore_install = {},
-			-- You can specify additional Treesitter modules here: -- For example: -- playground = {--enable = true,-- },
-			modules = {},
+			auto_install = true,
 			highlight = { enable = true },
 			indent = { enable = true },
+			playground = { enable = true },
 			incremental_selection = {
 				enable = true,
 				keymaps = {
-					init_selection = "<c-space>",
-					node_incremental = "<c-space>",
-					scope_incremental = "<c-s>",
+					init_selection = "<C-Space>",
+					node_incremental = "<C-Space>",
+					scope_incremental = "<C-s>",
 					node_decremental = "<M-space>",
 				},
 			},
@@ -51,12 +46,13 @@ return {
 					lookahead = true, -- Automatically jump forward to textobj, similar to targets.vim
 					keymaps = {
 						-- You can use the capture groups defined in textobjects.scm
-						["aa"] = "@parameter.outer",
-						["ia"] = "@parameter.inner",
 						["af"] = "@function.outer",
 						["if"] = "@function.inner",
 						["ac"] = "@class.outer",
-						["ic"] = "@class.inner",
+						-- You can optionally set descriptions to the mappings (used in the desc parameter of nvim_buf_set_keymap) which plugins like which-key display
+						["ic"] = { query = "@class.inner", desc = "Select inner part of a class region" },
+						-- You can also use captures from other query groups like `locals.scm`
+						["as"] = { query = "@scope", query_group = "locals", desc = "Select language scope" },
 					},
 				},
 				move = {
@@ -79,16 +75,7 @@ return {
 						["[]"] = "@class.outer",
 					},
 				},
-				swap = {
-					enable = true,
-					swap_next = {
-						["<leader>a"] = "@parameter.inner",
-					},
-					swap_previous = {
-						["<leader>A"] = "@parameter.inner",
-					},
-				},
 			},
 		})
-	end, 0),
+	end,
 }
