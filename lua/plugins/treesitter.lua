@@ -1,13 +1,14 @@
 return {
 	-- Highlight, edit, and navigate code
 	"nvim-treesitter/nvim-treesitter",
-	dependencies = {
-		"nvim-treesitter/nvim-treesitter-textobjects",
-	},
 	build = ":TSUpdate",
 	config = function()
 		-- [[ Configure Treesitter ]]
 		-- See `:help nvim-treesitter`
+
+		-- Prefer git instead of curl in order to improve connectivity in some environments
+		require("nvim-treesitter.install").prefer_git = true
+
 		---@diagnostic disable-next-line: missing-fields
 		require("nvim-treesitter.configs").setup({
 			--- Add languages to be installed here that you want installed for treesitter
@@ -29,10 +30,11 @@ return {
 			-- Autoinstall languages that are not installed. Defaults to false (but you can change for yourself!)
 			auto_install = true,
 			highlight = { enable = true },
-			indent = { enable = true },
+			indent = { enable = true, disable = { "ruby" } },
 			playground = { enable = true },
 			incremental_selection = {
 				enable = true,
+				disable = { "ruby" },
 				keymaps = {
 					init_selection = "<C-Space>",
 					node_incremental = "<C-Space>",

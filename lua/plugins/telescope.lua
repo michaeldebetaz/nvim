@@ -28,7 +28,9 @@ return {
 		require("telescope").setup({
 			defaults = {
 				mappings = {
-					i = { ["<C-h>"] = "which_key" },
+					i = {
+						["<C-Enter>"] = "to_fuzzy_refine",
+					},
 				},
 			},
 			extensions = {
