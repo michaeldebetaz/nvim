@@ -126,18 +126,6 @@ return {
 					},
 				},
 			},
-			htmx = {
-				settings = {
-					filetypes = {
-						"html",
-						"astro",
-						"javascriptreact",
-						"javascript.jsx",
-						"typescriptreact",
-						"typescript.tsx",
-					},
-				},
-			},
 			lua_ls = {
 				settings = {
 					Lua = { completion = { callSnippet = "Replace" } },
@@ -168,6 +156,20 @@ return {
 					-- certain features of an LSP (for example, turning off formatting for tsserver)
 					server.capabilities = vim.tbl_deep_extend("force", {}, capabilities, server.capabilities or {})
 					require("lspconfig")[server_name].setup(server)
+
+					-- NOTE: Workaround because Lazy is unable to define filetypes for the htmx lsp via opts
+					-- source: https://github.com/ThePrimeagen/htmx-lsp/issues/47#issuecomment-1998661617
+					local lspconfig = require("lspconfig")
+					lspconfig.htmx.setup({
+						filetypes = {
+							"html",
+							"astro",
+							"javascriptreact",
+							"javascript.jsx",
+							"typescriptreact",
+							"typescript.tsx",
+						},
+					})
 				end,
 			},
 		})
