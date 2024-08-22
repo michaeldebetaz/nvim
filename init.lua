@@ -18,7 +18,6 @@ vim.opt.rtp:prepend(lazypath)
 --
 --  You can also configure plugins after the setup call,
 --  as they will be available in your neovim runtime.
-
 require("lazy").setup({ { import = "plugins" } }, {
 	ui = {
 		-- If you have a Nerd Font, set icons to an empty table which will use the

@@ -1,6 +1,7 @@
 return {
 	"stevearc/conform.nvim",
-	lazy = false,
+	event = { "BufWritePre" },
+	cmd = { "ConformInfo" },
 	keys = {
 		{
 			"<leader>f",
@@ -25,16 +26,16 @@ return {
 			}
 		end,
 		formatters_by_ft = {
-			astro = { { "prettierd", "prettier" } },
-			go = { { "gofumpt", "gofmt" }, "goimports" },
-			html = { { "prettierd", "prettier" } },
-			javascript = { { "prettierd", "prettier" } },
-			javascriptreact = { { "prettierd", "prettier" } },
+			astro = { "prettierd", "prettier", stop_after_first = true },
+			go = { "gofumpt", "gofmt", "goimports" },
+			html = { "prettierd", "prettier", stop_after_first = true },
+			javascript = { "prettierd", "prettier", stop_after_first = true },
+			javascriptreact = { "prettierd", "prettier", stop_after_first = true },
 			lua = { "stylua" },
 			python = { "isort", "black" },
 			sh = { "shfmt" },
-			typescript = { { "prettierd", "prettier" } },
-			typescriptreact = { { "prettierd", "prettier" } },
+			typescript = { "prettierd", "prettier", stop_after_first = true },
+			typescriptreact = { "prettierd", "prettier", stop_after_first = true },
 		},
 	},
 }
