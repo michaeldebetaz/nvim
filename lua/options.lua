@@ -4,9 +4,6 @@ vim.opt.shiftwidth = 2
 vim.opt.expandtab = true
 vim.opt.softtabstop = 2
 
--- Set highlight on search
-vim.opt.hlsearch = false
-
 -- Make line numbers default
 vim.opt.number = true
 -- Set Relative number
@@ -56,6 +53,10 @@ vim.opt.cursorline = true
 
 -- Minimal number of screen lines to keep above and below the cursor.
 vim.opt.scrolloff = 10
+
+-- Set highlight on search
+vim.opt.hlsearch = false
+vim.keymap.set("n", "<Esc>", "<cmd>nohlsearch<CR>")
 
 -- Set completeopt to have a better completion experience
 vim.opt.completeopt = "menuone,noselect"
