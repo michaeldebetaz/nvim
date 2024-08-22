@@ -15,7 +15,6 @@ return {
 		local wk = require("which-key")
 		wk.setup()
 
-<<<<<<< Updated upstream
 		wk.add({
 			{ "<leader>c", group = "[C]ode" },
 			{ "<leader>c_", hidden = true },
@@ -31,17 +30,6 @@ return {
 			{ "<leader>t_", hidden = true },
 			{ "<leader>w", group = "[W]orkspace" },
 			{ "<leader>w_", hidden = true },
-=======
-		-- Document existing key chains
-		require("which-key").add({
-			{ "<leader>c", group = "[C]ode" },
-			{ "<leader>d", group = "[D]ocument" },
-			{ "<leader>r", group = "[R]ename" },
-			{ "<leader>s", group = "[S]earch" },
-			{ "<leader>w", group = "[W]orkspace" },
-			{ "<leader>t", group = "[T]oggle" },
-			{ "<leader>h", group = "Git [H]unk", mode = { "n", "v" } },
->>>>>>> Stashed changes
 		})
 	end,
 }
