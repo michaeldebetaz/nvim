@@ -131,7 +131,7 @@ return {
 			},
 			pyright = {},
 			tailwindcss = {},
-			tsserver = {},
+			ts_ls = {},
 		}
 
 		-- Ensure the servers and tools above are installed
