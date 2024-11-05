@@ -112,18 +112,6 @@ return {
 
 		local servers = {
 			bashls = {},
-			eslint = {
-				settings = {
-					filetypes = {
-						"javascript",
-						"javascriptreact",
-						"javascript.jsx",
-						"typescript",
-						"typescriptreact",
-						"typescript.tsx",
-					},
-				},
-			},
 			lua_ls = {
 				settings = {
 					Lua = { completion = { callSnippet = "Replace" } },

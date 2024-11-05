@@ -56,7 +56,6 @@ vim.opt.scrolloff = 10
 
 -- Set highlight on search
 vim.opt.hlsearch = false
-vim.keymap.set("n", "<Esc>", "<cmd>nohlsearch<CR>")
 
 -- Set completeopt to have a better completion experience
 vim.opt.completeopt = "menuone,noselect"

@@ -5,7 +5,7 @@ return {
 	branch = "0.1.x",
 	dependencies = {
 		"nvim-lua/plenary.nvim",
-		{ -- If encountering errors, see telescope-fzf-native README for install instructions
+		{ -- If encountering errors, see telescope-fzf-native README for installation instructions
 			"nvim-telescope/telescope-fzf-native.nvim",
 
 			-- `build` is used to run some command when the plugin is installed/updated.
@@ -52,7 +52,7 @@ return {
 						["dd"] = require("telescope.actions").delete_buffer,
 					},
 					i = {
-						["<C-Enter>"] = "to_fuzzy_refine",
+						["<C-Enter>"] = require("telescope.actions").to_fuzzy_refine,
 					},
 				},
 			},
@@ -119,22 +119,11 @@ return {
 						vim.api.nvim_buf_delete(selection.bufnr, { force = true })
 						refresh_buffer_searcher()
 					end
-					local delete_multiple_buf = function()
-						local picker = action_state.get_current_picker(prompt_bufnr)
-						local selection = picker:get_multi_selection()
-						for _, entry in ipairs(selection) do
-							vim.api.nvim_buf_delete(entry.bufnr, { force = true })
-						end
-						refresh_buffer_searcher()
-					end
 					map("n", "dd", delete_buf)
-					map("n", "<C-d>", delete_multiple_buf)
-					map("i", "<C-d>", delete_multiple_buf)
 					return true
 				end,
 			})
 		end
-
 		vim.keymap.set("n", "<leader><leader>", buffer_searcher, { desc = "[ ] Find existing buffers" })
 	end,
 }

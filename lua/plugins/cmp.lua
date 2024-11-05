@@ -40,7 +40,7 @@ return {
 					luasnip.lsp_expand(args.body)
 				end,
 			},
-			completion = { completeopt = "menu,menuone,noselect" },
+			completion = { completeopt = "menu,menuone,noinsert" },
 			window = {
 				completion = cmp.config.window.bordered(),
 				documentation = cmp.config.window.bordered(),
@@ -75,10 +75,11 @@ return {
 				end, { "i", "s" }),
 			}),
 			sources = {
-				{ name = "buffer" },
-				{ name = "luasnip" },
+				{ name = "lazydev", group_index = 0 },
 				{ name = "nvim_lsp" },
+				{ name = "luasnip" },
 				{ name = "path" },
+				{ name = "buffer" },
 			},
 		})
 

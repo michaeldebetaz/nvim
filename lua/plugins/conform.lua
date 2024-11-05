@@ -27,7 +27,7 @@ return {
 		end,
 		formatters_by_ft = {
 			astro = { "prettierd", "prettier", stop_after_first = true },
-			go = { "gofumpt", "gofmt", "goimports" },
+			go = { "gofumpt", "goimports" },
 			html = { "prettierd", "prettier", stop_after_first = true },
 			javascript = { "prettierd", "prettier", stop_after_first = true },
 			javascriptreact = { "prettierd", "prettier", stop_after_first = true },

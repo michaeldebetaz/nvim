@@ -2,15 +2,20 @@ return {
 	-- Highlight, edit, and navigate code
 	"nvim-treesitter/nvim-treesitter",
 	build = ":TSUpdate",
+	main = "nvim-treesitter.configs", -- Sets main module to use for opts
 	opts = {
 		ensure_installed = {
 			"bash",
+			"c",
+			"diff",
 			"go",
 			"html",
 			"javascript",
 			"lua",
+			"luadoc",
 			"markdown",
 			"markdown_inline",
+			"query",
 			"regex",
 			"tsx",
 			"typescript",
@@ -28,10 +33,4 @@ return {
 		},
 		indent = { enable = true, disable = { "ruby" } },
 	},
-	config = function(_, opts)
-		-- [[ Configure Treesitter ]] See `:help nvim-treesitter`
-
-		---@diagnostic disable-next-line: missing-fields
-		require("nvim-treesitter.configs").setup(opts)
-	end,
 }
