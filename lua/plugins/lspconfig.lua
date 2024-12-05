@@ -117,7 +117,7 @@ return {
 					Lua = { completion = { callSnippet = "Replace" } },
 				},
 			},
-			pyright = {},
+			pyright = { settings = { python = { analysis = { autoSearchPaths = true } } } },
 			tailwindcss = {},
 			ts_ls = {},
 		}
