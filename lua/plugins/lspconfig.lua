@@ -119,7 +119,9 @@ return {
 			},
 			pyright = { settings = { python = { analysis = { autoSearchPaths = true } } } },
 			tailwindcss = {},
-			ts_ls = {},
+			ts_ls = {
+				settings = {},
+			},
 		}
 
 		-- Ensure the servers and tools above are installed

@@ -10,7 +10,7 @@ return {
 			updateevents = "TextChanged,TextChangedI",
 		})
 
-		require("luasnip.loaders.from_vscode").lazy_load()	
+		require("luasnip.loaders.from_vscode").lazy_load()
 
 		vim.keymap.set({ "i" }, "<C-K>", function()
 			ls.expand()

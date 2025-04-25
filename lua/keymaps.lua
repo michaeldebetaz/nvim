@@ -57,3 +57,6 @@ vim.keymap.set("n", "<C-Up>", ":resize +2<CR>", { silent = true })
 vim.keymap.set("n", "<C-Down>", ":resize -2<CR>", { silent = true })
 vim.keymap.set("n", "<C-Left>", ":vertical resize +2<CR>", { silent = true })
 vim.keymap.set("n", "<C-Right>", ":vertical resize -2<CR>", { silent = true })
+
+-- Search and replace selected text
+vim.keymap.set("v", "<leader>sr", 'y:%s/<C-r>"//g<Left><Left>', { silent = true })
