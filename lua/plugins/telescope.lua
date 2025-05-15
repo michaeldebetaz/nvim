@@ -2,7 +2,6 @@
 return {
 	"nvim-telescope/telescope.nvim",
 	event = "VimEnter",
-	branch = "0.1.x",
 	dependencies = {
 		"nvim-lua/plenary.nvim",
 		{ -- If encountering errors, see telescope-fzf-native README for installation instructions
@@ -85,8 +84,6 @@ return {
 			}))
 		end, { desc = "[/] Fuzzily search in current buffer" })
 
-		-- Also possible to pass additional configuration options.
-		--  See `:help telescope.builtin.live_grep()` for information about particular keys
 		vim.keymap.set("n", "<leader>s/", function()
 			builtin.live_grep({
 				grep_open_files = true,

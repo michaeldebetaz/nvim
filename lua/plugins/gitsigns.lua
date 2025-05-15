@@ -17,7 +17,6 @@ return {
 			vim.keymap.set("n", "<leader>hs", gitsigns.stage_hunk, { buffer = bufnr, desc = "Stage hunk" })
 			vim.keymap.set("n", "<leader>hr", gitsigns.reset_hunk, { buffer = bufnr, desc = "Reset hunk" })
 			vim.keymap.set("n", "<leader>hp", gitsigns.preview_hunk, { buffer = bufnr, desc = "Preview hunk" })
-			vim.keymap.set("n", "<leader>ht", gitsigns.toggle_deleted, { buffer = bufnr, desc = "Toggle deleted" })
 			vim.keymap.set("n", "<leader>hf", function()
 				gitsigns.nav_hunk("first")
 			end, { buffer = bufnr, desc = "Jump to first hunk" })
