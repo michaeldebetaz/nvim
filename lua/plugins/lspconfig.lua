@@ -177,6 +177,7 @@ return {
 			},
 			pyright = { settings = { python = { analysis = { autoSearchPaths = true } } } },
 			tailwindcss = {},
+			ts_ls = {},
 		}
 
 		-- You can add other tools here that you want Mason to install

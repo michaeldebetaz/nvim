@@ -45,28 +45,24 @@ local function find_node_child(node, type)
 end
 
 ---@return TSNode|nil
-local function get_function_node()
+local function get_parent_function_node()
 	local current_node = ts_utils.get_node_at_cursor()
 	if current_node == nil then
-		vim.notify("No node found", vim.log.levels.INFO)
+		vim.notify("Treesitter: No node found", vim.log.levels.INFO)
 		return nil
 	end
 
 	---@type TSNode|nil
-	local function_node = nil
 	while current_node ~= nil and current_node.parent do
 		if current_node:type() == "function_declaration" then
-			function_node = current_node
+			return current_node
 		end
 
 		---@type TSNode|nil
 		current_node = current_node:parent()
-		if not current_node then
-			break
-		end
 	end
 
-	return function_node
+	return nil
 end
 
 ---@param function_node TSNode
@@ -92,7 +88,7 @@ local function get_function_parameters(function_node)
 end
 
 local function insert_jsdoc()
-	local function_node = get_function_node()
+	local function_node = get_parent_function_node()
 	if not function_node then
 		vim.notify("No function node found", vim.log.levels.INFO)
 		return nil
@@ -129,4 +125,4 @@ end
 
 vim.keymap.set({ "n", "i" }, "<leader>jd", function()
 	insert_jsdoc()
-end, { noremap = true, silent = true })
+end, { noremap = true, silent = true, desc = "Insert JSDoc" })
