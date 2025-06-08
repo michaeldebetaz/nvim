@@ -30,6 +30,7 @@ return {
 		end,
 		formatters_by_ft = {
 			astro = { "prettierd", "prettier", stop_after_first = true },
+			css = { "prettierd", "prettier", stop_after_first = true },
 			go = { "gofumpt", "goimports" },
 			html = { "prettierd", "prettier", stop_after_first = true },
 			javascript = { "prettierd", "prettier", stop_after_first = true },
@@ -38,8 +39,10 @@ return {
 			lua = { "stylua" },
 			python = { "isort", "black" },
 			sh = { "shfmt" },
+			sql = { "sleek" },
 			typescript = { "prettierd", "prettier", stop_after_first = true },
 			typescriptreact = { "prettierd", "prettier", stop_after_first = true },
+			yaml = { "prettierd", "prettier", stop_after_first = true },
 		},
 	},
 }
