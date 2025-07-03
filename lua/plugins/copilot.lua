@@ -9,8 +9,10 @@ return {
 			function()
 				if require("copilot.client").is_disabled() then
 					require("copilot.command").enable()
+					vim.notify("Copilot enabled", vim.log.levels.INFO)
 				else
 					require("copilot.command").disable()
+					vim.notify("Copilot disabled", vim.log.levels.INFO)
 				end
 			end,
 			desc = "Toggle (Copilot)",
@@ -21,8 +23,9 @@ return {
 			suggestion = {
 				auto_trigger = true,
 				keymap = {
-					accept = "<C-l>",
-					accept_line = "<M-l>",
+					accept_word = "<C-y>",
+					accept_line = "<C-l>",
+					accept = "<M-l>",
 				},
 			},
 		})
