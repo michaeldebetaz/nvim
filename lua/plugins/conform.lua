@@ -35,7 +35,7 @@ return {
 			html = { "prettierd", "prettier", stop_after_first = true },
 			javascript = { "prettierd", "prettier", stop_after_first = true },
 			javascriptreact = { "prettierd", "prettier", stop_after_first = true },
-			jsonc = { "prettierd", "prettier", stop_after_first = true },
+			json = { "prettierd", "prettier", stop_after_first = true },
 			lua = { "stylua" },
 			python = { "isort", "black" },
 			sh = { "shfmt" },
