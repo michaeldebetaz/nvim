@@ -17,6 +17,7 @@ return {
 			"markdown_inline",
 			"query",
 			"regex",
+			"templ",
 			"tsx",
 			"typescript",
 			"vim",
