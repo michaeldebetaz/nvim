@@ -70,35 +70,46 @@ return {
 			return trees[1]:root()
 		end
 
-		---@alias TSNodeRange { start_row: integer, start_col: integer, end_row: integer, end_col: integer }
+		---@alias RowRange { start_row: integer, end_row: integer  }
 
 		---@param ctx conform.Context
-		---@param ranges TSNodeRange[]
+		---@param ranges RowRange[]
 		local function run_prettierd(ctx, ranges)
+			-- Make sure prettierd is executed inside the templ project directory
+			-- so that it can find the
+			--
+			local project_root = vim.fs.root(ctx.filename, { "package.json", "node_modules" })
+
+			local stdin_filepath = ctx.filename:gsub("%.templ$", ".html")
+
 			-- Run in reverse order to avoid messing up line numbers
 			for i = #ranges, 1, -1 do
 				local range = ranges[i]
-				-- The first row is the line with the opening tag, so we start from the next line
-				local start_row = range.start_row + 1
-				-- The last row is the line with the closing tag, but end_row is exclusive, so we can use it as is
-				local end_row = range.end_row
 
-				local stdin_filepath = ctx.filename:gsub("%.templ$", ".html")
-
-				local input_lines = vim.api.nvim_buf_get_lines(ctx.buf, start_row, end_row, false)
+				local input_lines = vim.api.nvim_buf_get_lines(ctx.buf, range.start_row, range.end_row, false)
 
 				local input_text = table.concat(input_lines, "\n")
 
-				local output_lines = vim.fn.systemlist({ "prettierd", "--stdin-filepath", stdin_filepath }, input_text)
+				-- -- local output_lines = vim.fn.systemlist({ "prettierd", "--stdin-filepath", stdin_filepath }, input_text)
 
-				if vim.v.shell_error ~= 0 then
-					local error = table.concat(output_lines, "\n")
-					vim.notify("Failed to run prettierd: " .. error, vim.log.levels.ERROR)
+				local out = vim.system(
+					{ "prettierd", "--stdin-filepath", stdin_filepath },
+					{ stdin = input_text, text = true, cwd = project_root }
+				):wait()
+
+				if out.code ~= 0 then
+					vim.notify("Failed to run prettierd: " .. vim.inspect(out), vim.log.levels.ERROR)
 					return
 				end
 
-				if output_lines and #output_lines > 0 then
-					vim.api.nvim_buf_set_lines(ctx.buf, start_row, end_row, false, output_lines)
+				---@type string[]
+				local output_lines = {}
+				if out.stdout and out.stdout ~= "" then
+					output_lines = vim.split(out.stdout, "\n")
+				end
+
+				if #output_lines > 0 then
+					vim.api.nvim_buf_set_lines(ctx.buf, range.start_row, range.end_row, false, output_lines)
 				end
 			end
 		end
@@ -112,24 +123,22 @@ return {
 
 				local query = vim.treesitter.query.parse("templ", "(component_block) @component.block")
 
-				---@type TSNodeRange[]
-				local ranges = {}
+				---@type RowRange[]
+				local component_block_inner_ranges = {}
 
 				for _, node in query:iter_captures(root, ctx.buf) do
-					local start_row, start_col, end_row, end_col = node:range()
+					local start_row, _, end_row, _ = node:range()
 					-- We only want to format if there is content inside the component block
-					if end_row > start_row + 1 then
-						table.insert(ranges, {
-							start_row = start_row,
-							start_col = start_col,
-							end_row = end_row,
-							end_col = end_col,
-						})
+					local inner_start_row = start_row + 1
+					if end_row > inner_start_row then
+						---@type RowRange
+						local range = { start_row = inner_start_row, end_row = end_row }
+						table.insert(component_block_inner_ranges, range)
 					end
 				end
 
-				if #ranges > 0 then
-					run_prettierd(ctx, ranges)
+				if #component_block_inner_ranges > 0 then
+					run_prettierd(ctx, component_block_inner_ranges)
 				end
 
 				require("conform").format({
