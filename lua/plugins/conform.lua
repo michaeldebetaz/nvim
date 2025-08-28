@@ -17,7 +17,7 @@ return {
 		notify_on_error = false,
 		format_on_save = function(bufnr)
 			---@type string[]
-			local ignored_filetypes = { "c", "cpp" }
+			local ignored_filetypes = { "c", "cpp", "templ" }
 			if vim.tbl_contains(ignored_filetypes, vim.bo[bufnr].filetype) then
 				return nil
 			else
@@ -40,8 +40,7 @@ return {
 			python = { "isort", "black" },
 			sh = { "shfmt" },
 			sql = { "sleek" },
-			-- NOTE: formatting on save is done in the autocmd below
-			-- templ = {},
+			templ = { "templ" },
 			typescript = { "prettierd", "prettier", stop_after_first = true },
 			typescriptreact = { "prettierd", "prettier", stop_after_first = true },
 			yaml = { "prettierd", "prettier", stop_after_first = true },
@@ -53,7 +52,7 @@ return {
 
 		---@param bufnr integer
 		---@return TSNode|nil
-		local get_root = function(bufnr)
+		local function get_root(bufnr)
 			-- Parse with treesitter
 			local parser = vim.treesitter.get_parser(bufnr, "templ")
 			if parser == nil then
@@ -70,27 +69,53 @@ return {
 			return trees[1]:root()
 		end
 
-		---@alias RowRange { start_row: integer, end_row: integer  }
+		---@param bufnr integer
+		---@param root TSNode
+		---@return string masked_text, table<string, string> replacements
+		local function mask_templ_expressions(bufnr, root)
+			local lines = vim.api.nvim_buf_get_lines(bufnr, 0, -1, false)
+			local text = table.concat(lines, "\n")
 
-		---@param ctx conform.Context
-		---@param ranges RowRange[]
-		local function run_prettierd(ctx, ranges)
+			local attribte_expression_query = vim.treesitter.query.parse(
+				"templ",
+				[[
+            (attribute (expression) @attribute.expression)
+          ]]
+			)
+
+			---@type table<string, string>
+			local replacements = {}
+
+			for id, node in attribte_expression_query:iter_captures(root, bufnr) do
+				local _, _, start_byte, _, _, end_byte = node:range(true)
+				local key = '"__TEMPL_EXPR_' .. tostring(id) .. '__"'
+				replacements[key] = vim.treesitter.get_node_text(node, bufnr)
+				---@type string
+				text = text:sub(1, start_byte) .. key .. text:sub(end_byte + 1)
+			end
+
+			return text, replacements
+		end
+
+		---@alias ByteRange { start_byte: integer, end_byte: integer }
+
+		---@param filename string
+		---@param text string
+		---@param byte_ranges ByteRange[]
+		---@return string|nil formatted_masked_text
+		local function run_prettierd(filename, text, byte_ranges)
 			-- Make sure prettierd is executed inside the templ project directory
-			-- so that it can find the
-			--
-			local project_root = vim.fs.root(ctx.filename, { "package.json", "node_modules" })
+			local project_root = vim.fs.root(filename, { "package.json", "node_modules" })
 
-			local stdin_filepath = ctx.filename:gsub("%.templ$", ".html")
+			local stdin_filepath = filename:gsub("%.templ$", ".html")
 
 			-- Run in reverse order to avoid messing up line numbers
-			for i = #ranges, 1, -1 do
-				local range = ranges[i]
+			for i = #byte_ranges, 1, -1 do
+				local byte_range = byte_ranges[i]
 
-				local input_lines = vim.api.nvim_buf_get_lines(ctx.buf, range.start_row, range.end_row, false)
-
-				local input_text = table.concat(input_lines, "\n")
-
-				-- -- local output_lines = vim.fn.systemlist({ "prettierd", "--stdin-filepath", stdin_filepath }, input_text)
+				local prev = text:sub(1, byte_range.start_byte)
+				local input_text = text:sub(byte_range.start_byte + 1, byte_range.end_byte)
+				local next = text:sub(byte_range.end_byte + 1)
 
 				local out = vim.system(
 					{ "prettierd", "--stdin-filepath", stdin_filepath },
@@ -99,19 +124,15 @@ return {
 
 				if out.code ~= 0 then
 					vim.notify("Failed to run prettierd: " .. vim.inspect(out), vim.log.levels.ERROR)
-					return
+					return nil
 				end
 
-				---@type string[]
-				local output_lines = {}
-				if out.stdout and out.stdout ~= "" then
-					output_lines = vim.split(out.stdout, "\n")
-				end
-
-				if #output_lines > 0 then
-					vim.api.nvim_buf_set_lines(ctx.buf, range.start_row, range.end_row, false, output_lines)
+				if out.stdout then
+					text = prev .. out.stdout .. next
 				end
 			end
+
+			return text
 		end
 
 		require("conform").formatters.prettierd_templ = {
@@ -121,24 +142,49 @@ return {
 					return
 				end
 
-				local query = vim.treesitter.query.parse("templ", "(component_block) @component.block")
+				local masked_text, replacements = mask_templ_expressions(ctx.buf, root)
 
-				---@type RowRange[]
-				local component_block_inner_ranges = {}
+				local component_block_query = vim.treesitter.query.parse(
+					"templ",
+					[[ 
+            (component_declaration 
+              (component_block) @component.block)
+          ]]
+				)
 
-				for _, node in query:iter_captures(root, ctx.buf) do
-					local start_row, _, end_row, _ = node:range()
-					-- We only want to format if there is content inside the component block
-					local inner_start_row = start_row + 1
-					if end_row > inner_start_row then
-						---@type RowRange
-						local range = { start_row = inner_start_row, end_row = end_row }
-						table.insert(component_block_inner_ranges, range)
+				---@type ByteRange[]
+				local component_block_ranges = {}
+
+				for _, node in component_block_query:iter_captures(root, ctx.buf) do
+					local _, _, start_byte, _, _, end_byte = node:range(true)
+
+					if node:child_count() > 0 then
+						table.insert(component_block_ranges, { start_byte = start_byte, end_byte = end_byte })
 					end
 				end
 
-				if #component_block_inner_ranges > 0 then
-					run_prettierd(ctx, component_block_inner_ranges)
+				---@type string[]
+				local formatted_lines = {}
+				if #component_block_ranges > 0 then
+					local formatted_text = run_prettierd(ctx.filename, masked_text, component_block_ranges)
+
+					if formatted_text ~= nil then
+						-- Restore the masked templ expressions
+						for key, value in pairs(replacements) do
+							formatted_text = formatted_text:gsub(key, value)
+						end
+
+						formatted_lines = vim.split(formatted_text, "\n")
+
+						-- Preserve cursor position after setting lines
+						local cursor_pos = vim.api.nvim_win_get_cursor(0)
+						local line_count = vim.api.nvim_buf_line_count(ctx.buf)
+						cursor_pos[1] = math.min(cursor_pos[1], line_count)
+
+						vim.api.nvim_buf_set_lines(ctx.buf, 0, -1, false, formatted_lines)
+
+						vim.api.nvim_win_set_cursor(0, cursor_pos)
+					end
 				end
 
 				require("conform").format({
