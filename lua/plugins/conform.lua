@@ -115,6 +115,7 @@ return {
 
 				local prev = text:sub(1, byte_range.start_byte)
 				local input_text = text:sub(byte_range.start_byte + 1, byte_range.end_byte)
+				print("INPUT TEXT:", input_text)
 				local next = text:sub(byte_range.end_byte + 1)
 
 				local out = vim.system(
@@ -144,6 +145,9 @@ return {
 
 				local masked_text, replacements = mask_templ_expressions(ctx.buf, root)
 
+				local scratch_bufnr = vim.api.nvim_create_buf(false, true)
+				vim.api.nvim_buf_set_lines(scratch_bufnr, 0, -1, false, vim.split(masked_text, "\n"))
+
 				local component_block_query = vim.treesitter.query.parse(
 					"templ",
 					[[ 
@@ -155,10 +159,11 @@ return {
 				---@type ByteRange[]
 				local component_block_ranges = {}
 
-				for _, node in component_block_query:iter_captures(root, ctx.buf) do
+				for _, node in component_block_query:iter_captures(root, scratch_bufnr) do
 					local _, _, start_byte, _, _, end_byte = node:range(true)
 
 					if node:child_count() > 0 then
+						print("NODE: ", vim.treesitter.get_node_text(node, scratch_bufnr))
 						table.insert(component_block_ranges, { start_byte = start_byte, end_byte = end_byte })
 					end
 				end
@@ -166,7 +171,8 @@ return {
 				---@type string[]
 				local formatted_lines = {}
 				if #component_block_ranges > 0 then
-					local formatted_text = run_prettierd(ctx.filename, masked_text, component_block_ranges)
+					local filename = ctx.filename
+					local formatted_text = run_prettierd(filename, masked_text, component_block_ranges)
 
 					if formatted_text ~= nil then
 						-- Restore the masked templ expressions
@@ -186,6 +192,8 @@ return {
 						vim.api.nvim_win_set_cursor(0, cursor_pos)
 					end
 				end
+
+				vim.api.nvim_buf_delete(scratch_bufnr, { force = true })
 
 				require("conform").format({
 					buf = ctx.buf,
