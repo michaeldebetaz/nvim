@@ -40,7 +40,7 @@ return {
 			python = { "isort", "black" },
 			sh = { "shfmt" },
 			sql = { "sleek" },
-			templ = { "templ" },
+			templ = { "templ", stop_after_first = true },
 			typescript = { "prettierd", "prettier", stop_after_first = true },
 			typescriptreact = { "prettierd", "prettier", stop_after_first = true },
 			yaml = { "prettierd", "prettier", stop_after_first = true },
@@ -50,7 +50,7 @@ return {
 	config = function(_, opts)
 		require("conform").setup(opts)
 
-		---@param bufnr integer
+		---@para---@param bufnr integer
 		---@return TSNode|nil
 		local function get_root(bufnr)
 			-- Parse with treesitter
@@ -69,55 +69,118 @@ return {
 			return trees[1]:root()
 		end
 
-		---@alias ByteRange { id: integer, start_byte: integer, end_byte: integer, text: string }
-
-		---@param id integer
-		---@return string
-		local function generate_unique_key(id)
-			local random_number = math.random(1000, 9999)
-			return '"__TEMPL_EXPR_' .. id .. "_" .. random_number .. '__"'
-		end
-
 		---@param bufnr integer
-		---@param root TSNode
-		---@return string masked_text, table<string, string> replacements
-		local function mask_templ_expressions(bufnr, root)
+		---@return string output_text, table<string, string> replacements
+		local function mask_attr_expr(bufnr)
 			local lines = vim.api.nvim_buf_get_lines(bufnr, 0, -1, false)
 			local text = table.concat(lines, "\n")
-
-			local attribte_expression_query = vim.treesitter.query.parse(
-				"templ",
-				[[
-            (attribute (expression) @attribute.expression)
-          ]]
-			)
-
-			---@type ByteRange[]
-			local ranges = {}
-			for id, node in attribte_expression_query:iter_captures(root, bufnr) do
-				local _, _, start_byte, _, _, end_byte = node:range(true)
-				local node_text = vim.treesitter.get_node_text(node, bufnr)
-				---@type ByteRange
-				local range = { id = id, start_byte = start_byte, end_byte = end_byte, text = node_text }
-				table.insert(ranges, range)
-			end
 
 			---@type table<string, string>
 			local replacements = {}
 
-			-- Apply replacements in reverse order to avoid messing up byte positions
-			for i = #ranges, 1, -1 do
-				local range = ranges[i]
-				-- Ensure the generated key does not already exist in the text
-				---@string
-				local key
-				repeat
-					key = generate_unique_key(range.id)
-				until text:find(key, 1, true) == nil
+			local root = get_root(bufnr)
+			if root == nil then
+				vim.notify("Error: mask_inner function: no root found", vim.log.levels.ERROR)
+				return text, replacements
+			end
 
-				replacements[key] = range.text
+			local query = vim.treesitter.query.parse(
+				"templ",
+				[[
+          (attribute (expression) @attr.expr)
+        ]]
+			)
+			---@alias TSQueryCapture { name: string, node: TSNode }
 
-				text = text:sub(1, range.start_byte) .. key .. text:sub(range.end_byte + 1)
+			---@type TSQueryCapture[]
+			local captures = {}
+			for id, node in query:iter_captures(root, bufnr) do
+				---@type TSQueryCapture
+				local capture = { name = query.captures[id], node = node }
+				table.insert(captures, capture)
+			end
+
+			if #captures < 1 then
+				return text, replacements
+			end
+
+			for i = #captures, 1, -1 do
+				local capture = captures[i]
+
+				-- if it's an attribute expression, the mask should be quoted
+				local key = '"__TEMPL_ATTR_EXPR_' .. i .. '__"'
+				replacements[key] = vim.treesitter.get_node_text(capture.node, bufnr)
+				local _, _, start_byte, _, _, end_byte = capture.node:range(true)
+				text = text:sub(1, start_byte) .. key .. text:sub(end_byte + 1)
+			end
+
+			return text, replacements
+		end
+
+		---@param bufnr integer
+		---@return string masked_text, table<string, string> replacements
+		local function mask_between(bufnr)
+			local lines = vim.api.nvim_buf_get_lines(bufnr, 0, -1, false)
+			local text = table.concat(lines, "\n")
+
+			---@type table<string, string>
+			local replacements = {}
+
+			local scratch_buf_root = get_root(bufnr)
+			if scratch_buf_root == nil then
+				vim.notify("Error: mask_outer function: no root found", vim.log.levels.ERROR)
+				return text, replacements
+			end
+
+			local query = vim.treesitter.query.parse(
+				"templ",
+				[[
+			    (component_declaration
+				  (component_block) @component.block)
+		    ]]
+			)
+			---@type TSQueryCapture[]
+			local captures = {}
+			for id, node in query:iter_captures(scratch_buf_root, bufnr) do
+				---@type TSQueryCapture
+				local capture = { name = query.captures[id], node = node }
+				table.insert(captures, capture)
+			end
+
+			if #captures < 1 then
+				return text, replacements
+			end
+
+			---@type { start_byte: integer, end_byte: integer }[]
+			local mask = { start_byte = 1, end_byte = -1 }
+
+			for i = #captures, 1, -1 do
+				local capture = captures[i]
+
+				local _, _, node_start_byte, _, _, node_end_byte = capture.node:range(true)
+				-- Mask from the end of the node ("}" included)
+				mask.start_byte = node_end_byte + 1 - 1
+
+				local key = "__TEMPL_AFTER_BLOCK_" .. i .. "__"
+				replacements[key] = text:sub(mask.start_byte, mask.end_byte)
+
+				local prev = text:sub(1, mask.start_byte - 1)
+				local next = ""
+
+				if i < #captures then
+					next = text:sub(mask.end_byte + 1, -1)
+				end
+
+				text = prev .. key .. next
+
+				mask.end_byte = node_start_byte + 2
+
+				-- Mask from the bottom to the start of the first node ("{" included)
+				if i == 1 then
+					key = "__TEMPL_BEFORE_BLOCK_" .. i .. "__"
+					replacements[key] = text:sub(1, mask.end_byte - 1)
+					text = key .. text:sub(mask.end_byte + 1)
+				end
 			end
 
 			return text, replacements
@@ -125,119 +188,127 @@ return {
 
 		---@param filename string
 		---@param text string
-		---@param byte_ranges ByteRange[]
-		---@return string|nil formatted_masked_text
-		local function run_prettierd(filename, text, byte_ranges)
+		---@return string formatted_text
+		local function run_prettierd(filename, text)
 			-- Make sure prettierd is executed inside the templ project directory
 			local project_root = vim.fs.root(filename, { "package.json", "node_modules" })
 
 			local stdin_filepath = filename:gsub("%.templ$", ".html")
 
-			-- Run in reverse order to avoid messing up line numbers
-			for i = #byte_ranges, 1, -1 do
-				local byte_range = byte_ranges[i]
+			local out = vim.system(
+				{ "prettierd", "--stdin-filepath", stdin_filepath },
+				{ stdin = text, text = true, cwd = project_root }
+			):wait()
 
-				local prev = text:sub(1, byte_range.start_byte)
-				local input_text = text:sub(byte_range.start_byte + 1, byte_range.end_byte)
-				local next = text:sub(byte_range.end_byte + 1)
+			if out.code ~= 0 then
+				vim.notify("Failed to run prettierd: " .. vim.inspect(out), vim.log.levels.ERROR)
+				return text
+			end
 
-				local out = vim.system(
-					{ "prettierd", "--stdin-filepath", stdin_filepath },
-					{ stdin = input_text, text = true, cwd = project_root }
-				):wait()
+			local stdout = out.stdout
+			if stdout ~= nil then
+				text = stdout
+			end
 
-				if out.code ~= 0 then
-					vim.notify("Failed to run prettierd: " .. vim.inspect(out), vim.log.levels.ERROR)
-					return nil
-				end
+			return text
+		end
 
-				if out.stdout then
-					text = prev .. out.stdout .. next
+		---@param text string
+		---@param replacements table<string, string>
+		---@return string unmasked_text
+		local function unmask(text, replacements)
+			for key, value in pairs(replacements) do
+				text = text:gsub(key, value)
+			end
+			return text
+		end
+
+		---@param bufnr integer
+		---@return string fixed_text
+		local function fix_formatting(bufnr)
+			local lines = vim.api.nvim_buf_get_lines(bufnr, 0, -1, false)
+			local text = table.concat(lines, "\n")
+
+			-- Add newline before first "case" in switch statements
+			local scratch_buf_root = get_root(bufnr)
+			if scratch_buf_root == nil then
+				vim.notify("Error: mask_outer function: no root found", vim.log.levels.ERROR)
+				return text
+			end
+
+			local query = vim.treesitter.query.parse(
+				"templ",
+				[[
+          (component_switch_statement) @switch
+		    ]]
+			)
+			---@type TSQueryCapture[]
+			local captures = {}
+			for id, node in query:iter_captures(scratch_buf_root, bufnr) do
+				---@type TSQueryCapture
+				local capture = { name = query.captures[id], node = node }
+				table.insert(captures, capture)
+			end
+
+			for i = #captures, 1, -1 do
+				local capture = captures[i]
+
+				local first_found = false
+				for child_node, _ in capture.node:iter_children() do
+					if not first_found and child_node:type() == "component_switch_expression_case" then
+						local _, _, start_byte = child_node:start()
+						local case_statement = "case"
+						local end_byte = start_byte + #case_statement
+
+						local new_text = "\n" .. case_statement
+						text = text:sub(1, start_byte) .. new_text .. text:sub(end_byte + 1)
+						first_found = true
+					end
 				end
 			end
 
 			return text
 		end
 
-		---@param bufnr integer
-		---@return  integer[] cursor_pos
-		local function save_cursor_position(bufnr)
-			local cursor_pos = vim.api.nvim_win_get_cursor(0)
-			local line_count = vim.api.nvim_buf_line_count(bufnr)
-			cursor_pos[1] = math.min(cursor_pos[1], line_count)
-			return cursor_pos
-		end
-
 		require("conform").formatters.prettierd_templ = {
 			format = function(_, ctx, _, _)
-				local ctx_buf_root = get_root(ctx.buf)
-				if ctx_buf_root == nil then
+				-- Don't format if there are any ctxerrors in the buffer
+				local errors = vim.diagnostic.get(ctx.buf, { severity = vim.diagnostic.severity.ERROR })
+				if errors[1] then
+					vim.notify("prettier_templ: not formatting due to LSP errors", vim.log.levels.WARN)
 					return
 				end
 
-				local masked_text, replacements = mask_templ_expressions(ctx.buf, ctx_buf_root)
-				local masked_lines = vim.split(masked_text, "\n")
-
+				-- Run the masking in a scratch buffer to avoid messing with the user's buffer
+				local input_lines = vim.api.nvim_buf_get_lines(ctx.buf, 0, -1, false)
 				local scratch_bufnr = vim.api.nvim_create_buf(false, true)
-				vim.api.nvim_buf_set_lines(scratch_bufnr, 0, -1, false, masked_lines)
+				vim.api.nvim_buf_set_lines(scratch_bufnr, 0, -1, false, input_lines)
 
-				local component_block_query = vim.treesitter.query.parse(
-					"templ",
-					[[ 
-            (component_declaration 
-              (component_block) @component.block)
-          ]]
-				)
+				local masked_attr_expr, replacements_attr_expr = mask_attr_expr(scratch_bufnr)
+				local masked_lines_inner = vim.split(masked_attr_expr, "\n")
+				vim.api.nvim_buf_set_lines(scratch_bufnr, 0, -1, false, masked_lines_inner)
 
-				local scratch_buf_root = get_root(scratch_bufnr)
-				if scratch_buf_root == nil then
-					vim.api.nvim_buf_delete(scratch_bufnr, { force = true })
-					return
-				end
+				local masked_between, replacements_between = mask_between(scratch_bufnr)
 
-				---@type ByteRange[]
-				local component_block_ranges = {}
+				local replacements = vim.tbl_extend("error", replacements_attr_expr, replacements_between)
 
-				for id, node in component_block_query:iter_captures(scratch_buf_root, scratch_bufnr) do
-					local _, _, start_byte, _, _, end_byte = node:range(true)
+				local masked_formatted = run_prettierd(ctx.filename, masked_between)
 
-					-- Only format non-empty component blocks
-					if node:child_count() > 0 then
-						local node_text = vim.treesitter.get_node_text(node, scratch_bufnr)
-						---@type ByteRange
-						local range = { id = id, start_byte = start_byte, end_byte = end_byte, text = node_text }
+				local formatted = unmask(masked_formatted, replacements)
+				local formatted_lines = vim.split(formatted, "\n")
+				vim.api.nvim_buf_set_lines(scratch_bufnr, 0, -1, false, formatted_lines)
 
-						table.insert(component_block_ranges, range)
-					end
-				end
+				local fixed = fix_formatting(scratch_bufnr)
+				local fixed_lines = vim.split(fixed, "\n")
+				vim.api.nvim_buf_set_lines(ctx.buf, 0, -1, false, fixed_lines)
 
 				vim.api.nvim_buf_delete(scratch_bufnr, { force = true })
 
-				if #component_block_ranges > 0 then
-					local formatted_text = run_prettierd(ctx.filename, masked_text, component_block_ranges)
-
-					if formatted_text ~= nil then
-						-- Restore the masked templ expressions
-						for key, value in pairs(replacements) do
-							formatted_text = formatted_text:gsub(key, value)
-						end
-
-						local formatted_lines = vim.split(formatted_text, "\n")
-
-						-- Preserve cursor position after setting lines
-						local cursor_pos = save_cursor_position(ctx.buf)
-
-						vim.api.nvim_buf_set_lines(ctx.buf, 0, -1, false, formatted_lines)
-
-						vim.api.nvim_win_set_cursor(0, cursor_pos)
-					end
-				end
-
 				require("conform").format({
-					buf = ctx.buf,
+					bufnr = ctx.buf,
 					formatters = { "templ" },
+					lsp_format = "fallback",
 					async = false,
-					timeout_ms = 500,
 				})
 			end,
 		}
