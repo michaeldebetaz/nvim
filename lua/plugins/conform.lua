@@ -50,140 +50,24 @@ return {
 	config = function(_, opts)
 		require("conform").setup(opts)
 
-		---@para---@param bufnr integer
+		---@param bufnr integer
+		---@param lang "templ" | "html"
 		---@return TSNode|nil
-		local function get_root(bufnr)
+		local function get_root(bufnr, lang)
 			-- Parse with treesitter
-			local parser = vim.treesitter.get_parser(bufnr, "templ")
+			local parser = vim.treesitter.get_parser(bufnr, lang)
 			if parser == nil then
-				vim.notify("Error: no parser found for templ", vim.log.levels.ERROR)
+				vim.notify("Error: no parser found for " .. lang, vim.log.levels.ERROR)
 				return nil
 			end
 
 			local trees = parser:parse()
 			if trees == nil then
-				vim.notify("Error: no trees found for templ parser", vim.log.levels.ERROR)
+				vim.notify("Error: no trees found for " .. lang .. "parser", vim.log.levels.ERROR)
 				return nil
 			end
 
 			return trees[1]:root()
-		end
-
-		---@param bufnr integer
-		---@return string output_text, table<string, string> replacements
-		local function mask_attr_expr(bufnr)
-			local lines = vim.api.nvim_buf_get_lines(bufnr, 0, -1, false)
-			local text = table.concat(lines, "\n")
-
-			---@type table<string, string>
-			local replacements = {}
-
-			local root = get_root(bufnr)
-			if root == nil then
-				vim.notify("Error: mask_inner function: no root found", vim.log.levels.ERROR)
-				return text, replacements
-			end
-
-			local query = vim.treesitter.query.parse(
-				"templ",
-				[[
-          (attribute (expression) @attr.expr)
-        ]]
-			)
-			---@alias TSQueryCapture { name: string, node: TSNode }
-
-			---@type TSQueryCapture[]
-			local captures = {}
-			for id, node in query:iter_captures(root, bufnr) do
-				---@type TSQueryCapture
-				local capture = { name = query.captures[id], node = node }
-				table.insert(captures, capture)
-			end
-
-			if #captures < 1 then
-				return text, replacements
-			end
-
-			for i = #captures, 1, -1 do
-				local capture = captures[i]
-
-				-- if it's an attribute expression, the mask should be quoted
-				local key = '"__TEMPL_ATTR_EXPR_' .. i .. '__"'
-				replacements[key] = vim.treesitter.get_node_text(capture.node, bufnr)
-				local _, _, start_byte, _, _, end_byte = capture.node:range(true)
-				text = text:sub(1, start_byte) .. key .. text:sub(end_byte + 1)
-			end
-
-			return text, replacements
-		end
-
-		---@param bufnr integer
-		---@return string masked_text, table<string, string> replacements
-		local function mask_between(bufnr)
-			local lines = vim.api.nvim_buf_get_lines(bufnr, 0, -1, false)
-			local text = table.concat(lines, "\n")
-
-			---@type table<string, string>
-			local replacements = {}
-
-			local scratch_buf_root = get_root(bufnr)
-			if scratch_buf_root == nil then
-				vim.notify("Error: mask_outer function: no root found", vim.log.levels.ERROR)
-				return text, replacements
-			end
-
-			local query = vim.treesitter.query.parse(
-				"templ",
-				[[
-			    (component_declaration
-				  (component_block) @component.block)
-		    ]]
-			)
-			---@type TSQueryCapture[]
-			local captures = {}
-			for id, node in query:iter_captures(scratch_buf_root, bufnr) do
-				---@type TSQueryCapture
-				local capture = { name = query.captures[id], node = node }
-				table.insert(captures, capture)
-			end
-
-			if #captures < 1 then
-				return text, replacements
-			end
-
-			---@type { start_byte: integer, end_byte: integer }[]
-			local mask = { start_byte = 1, end_byte = -1 }
-
-			for i = #captures, 1, -1 do
-				local capture = captures[i]
-
-				local _, _, node_start_byte, _, _, node_end_byte = capture.node:range(true)
-				-- Mask from the end of the node ("}" included)
-				mask.start_byte = node_end_byte + 1 - 1
-
-				local key = "__TEMPL_AFTER_BLOCK_" .. i .. "__"
-				replacements[key] = text:sub(mask.start_byte, mask.end_byte)
-
-				local prev = text:sub(1, mask.start_byte - 1)
-				local next = ""
-
-				if i < #captures then
-					next = text:sub(mask.end_byte + 1, -1)
-				end
-
-				text = prev .. key .. next
-
-				mask.end_byte = node_start_byte + 2
-
-				-- Mask from the bottom to the start of the first node ("{" included)
-				if i == 1 then
-					key = "__TEMPL_BEFORE_BLOCK_" .. i .. "__"
-					replacements[key] = text:sub(1, mask.end_byte - 1)
-					text = key .. text:sub(mask.end_byte + 1)
-				end
-			end
-
-			return text, replacements
 		end
 
 		---@param filename string
@@ -213,58 +97,179 @@ return {
 			return text
 		end
 
-		---@param text string
-		---@param replacements table<string, string>
-		---@return string unmasked_text
-		local function unmask(text, replacements)
-			for key, value in pairs(replacements) do
-				text = text:gsub(key, value)
+		---@param html string
+		---@return string[]|nil tag_starts
+		local function extract_start_tags(html)
+			local bufnr = vim.api.nvim_create_buf(false, true)
+
+			local lines = vim.split(html, "\n")
+			vim.api.nvim_buf_set_lines(bufnr, 0, -1, false, lines)
+
+			local root = get_root(bufnr, "html")
+			if root == nil then
+				vim.notify("Error: extract_tag_starts function: no root found", vim.log.levels.ERROR)
+				return nil
 			end
-			return text
+
+			local query = vim.treesitter.query.parse(
+				"html",
+				[[ 
+          (start_tag) @start.tag
+          (self_closing_tag) @self.closing.tag
+        ]]
+			)
+
+			---@type string[]
+			local formatted_tag_starts = {}
+
+			for _, node in query:iter_captures(root, bufnr) do
+				local node_text = vim.treesitter.get_node_text(node, bufnr)
+				table.insert(formatted_tag_starts, node_text)
+			end
+
+			vim.api.nvim_buf_delete(bufnr, { force = true })
+
+			return formatted_tag_starts
 		end
 
-		---@param bufnr integer
-		---@return string fixed_text
-		local function fix_formatting(bufnr)
-			local lines = vim.api.nvim_buf_get_lines(bufnr, 0, -1, false)
+		---@alias Capture.AttrExpr { rel_start_byte: integer, rel_end_byte: integer, key: string, expr_text: string }
+
+		---@class Capture
+		---@field start_byte integer
+		---@field end_byte integer
+		---@field tag_end string
+		---@field text string
+		---@field formatted_start_tag string
+		---@field attr_expr Capture.AttrExpr[]
+
+		---@param ctx conform.Context
+		---@return string formatted_text
+		local function format_start_tags(ctx)
+			local lines = vim.api.nvim_buf_get_lines(ctx.buf, 0, -1, false)
 			local text = table.concat(lines, "\n")
 
-			-- Add newline before first "case" in switch statements
-			local scratch_buf_root = get_root(bufnr)
-			if scratch_buf_root == nil then
-				vim.notify("Error: mask_outer function: no root found", vim.log.levels.ERROR)
+			local root = get_root(ctx.buf, "templ")
+			if root == nil then
+				vim.notify("Error: mask_elements function: no root found", vim.log.levels.ERROR)
 				return text
 			end
 
 			local query = vim.treesitter.query.parse(
 				"templ",
 				[[
-          (component_switch_statement) @switch
-		    ]]
+          (element (tag_start) @tag.start)
+          (self_closing_tag) @self.closing.tag
+        ]]
 			)
-			---@type TSQueryCapture[]
+
+			---@type Capture[]
 			local captures = {}
-			for id, node in query:iter_captures(scratch_buf_root, bufnr) do
-				---@type TSQueryCapture
-				local capture = { name = query.captures[id], node = node }
+
+			for _, node in query:iter_captures(root, ctx.buf) do
+				local _, _, start_byte, _, _, end_byte = node:range(true)
+				local node_text = vim.treesitter.get_node_text(node, ctx.buf)
+
+				---@type Capture
+				local capture = {
+					start_byte = start_byte,
+					end_byte = end_byte,
+					tag_end = "",
+					text = node_text,
+					formatted_start_tag = "",
+					attr_expr = {},
+				}
+
+				for child, _ in node:iter_children() do
+					if node:type() == "tag_start" and child:type() == "element_identifier" then
+						local element_identifier = vim.treesitter.get_node_text(child, ctx.buf)
+						capture.tag_end = "</" .. element_identifier .. ">"
+					end
+
+					if child:type() == "attribute" then
+						for attr_child, _ in child:iter_children() do
+							if attr_child:type() == "expression" then
+								local _, _, attr_child_start_byte, _, _, attr_child_end_byte = attr_child:range(true)
+								local rel_start_byte = attr_child_start_byte - start_byte
+								local rel_end_byte = attr_child_end_byte - start_byte
+
+								---@type Capture.AttrExpr
+								local attr_expr = {
+									rel_start_byte = rel_start_byte,
+									rel_end_byte = rel_end_byte,
+								}
+
+								table.insert(capture.attr_expr, attr_expr)
+							end
+						end
+					end
+				end
+
+				-- Replace attribute expressions with unique keys in reverse order
+				for i = #capture.attr_expr, 1, -1 do
+					local attr_expr = capture.attr_expr[i]
+
+					local before = capture.text:sub(1, attr_expr.rel_start_byte)
+					local after = capture.text:sub(attr_expr.rel_end_byte + 1, -1)
+
+					local abs_start_byte = capture.start_byte + attr_expr.rel_start_byte
+
+					local key = '"__TEMPL_ATTR_EXPR_' .. abs_start_byte .. '__"'
+					local expr_text = capture.text:sub(attr_expr.rel_start_byte + 1, attr_expr.rel_end_byte)
+					attr_expr.key = key
+					attr_expr.expr_text = expr_text
+
+					capture.text = before .. key .. after
+				end
+
 				table.insert(captures, capture)
 			end
 
+			-- Create the HTML to be formatted by concatenating all the captured elements
+
+			---@type string[]
+			local elements = {}
+
+			for _, capture in ipairs(captures) do
+				local element = capture.text .. capture.tag_end
+				table.insert(elements, element)
+			end
+
+			local html = table.concat(elements, "\n")
+
+			local formatted_html = run_prettierd(ctx.filename, html)
+
+			local formatted_start_tags = extract_start_tags(formatted_html)
+			if formatted_start_tags == nil then
+				vim.notify("Error: failed to extract start tags", vim.log.levels.ERROR)
+				return text
+			end
+
+			if #formatted_start_tags ~= #captures then
+				vim.notify(
+					"Error: number of formatted start tags does not match number of templ captures",
+					vim.log.levels.ERROR
+				)
+				return text
+			end
+
+			for i, formatted_start_tag in ipairs(formatted_start_tags) do
+				captures[i].formatted_start_tag = formatted_start_tag
+			end
+
+			-- Replace the original start tags in reverse order to avoid messing up byte positions
 			for i = #captures, 1, -1 do
 				local capture = captures[i]
 
-				local first_found = false
-				for child_node, _ in capture.node:iter_children() do
-					if not first_found and child_node:type() == "component_switch_expression_case" then
-						local _, _, start_byte = child_node:start()
-						local case_statement = "case"
-						local end_byte = start_byte + #case_statement
+				local formatted_start_tag = capture.formatted_start_tag
 
-						local new_text = "\n" .. case_statement
-						text = text:sub(1, start_byte) .. new_text .. text:sub(end_byte + 1)
-						first_found = true
-					end
+				-- Re-insert the original attribute expressions
+				for _, attr_expr in ipairs(capture.attr_expr) do
+					formatted_start_tag = formatted_start_tag:gsub(attr_expr.key, attr_expr.expr_text)
 				end
+
+				local before = text:sub(1, capture.start_byte)
+				local after = text:sub(capture.end_byte + 1, -1)
+				text = before .. formatted_start_tag .. after
 			end
 
 			return text
@@ -275,34 +280,14 @@ return {
 				-- Don't format if there are any ctxerrors in the buffer
 				local errors = vim.diagnostic.get(ctx.buf, { severity = vim.diagnostic.severity.ERROR })
 				if errors[1] then
-					vim.notify("prettier_templ: not formatting due to LSP errors", vim.log.levels.WARN)
+					vim.notify("Conform: prettier_templ formatting skipped due to LSP errors", vim.log.levels.WARN)
 					return
 				end
 
-				-- Run the masking in a scratch buffer to avoid messing with the user's buffer
-				local input_lines = vim.api.nvim_buf_get_lines(ctx.buf, 0, -1, false)
-				local scratch_bufnr = vim.api.nvim_create_buf(false, true)
-				vim.api.nvim_buf_set_lines(scratch_bufnr, 0, -1, false, input_lines)
-
-				local masked_attr_expr, replacements_attr_expr = mask_attr_expr(scratch_bufnr)
-				local masked_lines_inner = vim.split(masked_attr_expr, "\n")
-				vim.api.nvim_buf_set_lines(scratch_bufnr, 0, -1, false, masked_lines_inner)
-
-				local masked_between, replacements_between = mask_between(scratch_bufnr)
-
-				local replacements = vim.tbl_extend("error", replacements_attr_expr, replacements_between)
-
-				local masked_formatted = run_prettierd(ctx.filename, masked_between)
-
-				local formatted = unmask(masked_formatted, replacements)
+				local formatted = format_start_tags(ctx)
 				local formatted_lines = vim.split(formatted, "\n")
-				vim.api.nvim_buf_set_lines(scratch_bufnr, 0, -1, false, formatted_lines)
 
-				local fixed = fix_formatting(scratch_bufnr)
-				local fixed_lines = vim.split(fixed, "\n")
-				vim.api.nvim_buf_set_lines(ctx.buf, 0, -1, false, fixed_lines)
-
-				vim.api.nvim_buf_delete(scratch_bufnr, { force = true })
+				vim.api.nvim_buf_set_lines(ctx.buf, 0, -1, false, formatted_lines)
 
 				require("conform").format({
 					bufnr = ctx.buf,
