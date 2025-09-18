@@ -171,13 +171,12 @@ return {
 
 		local servers = {
 			bashls = {},
-			lua_ls = {
-				settings = {
-					Lua = { completion = { callSnippet = "Replace" } },
-				},
-			},
+			gopls = {},
+			html = {},
+			lua_ls = { settings = { Lua = { completion = { callSnippet = "Replace" } } } },
 			pyright = { settings = { python = { analysis = { autoSearchPaths = true } } } },
 			tailwindcss = {},
+			templ = {},
 			ts_ls = {},
 		}
 
@@ -186,6 +185,10 @@ return {
 		local ensure_installed = vim.tbl_keys(servers or {})
 		vim.list_extend(ensure_installed, {
 			"stylua", -- Used to format lua code
+			"gofumpt",
+			"goimports",
+			"prettier",
+			"prettierd",
 		})
 
 		require("mason-tool-installer").setup({ ensure_installed = ensure_installed })
@@ -205,13 +208,13 @@ return {
 
 					-- NOTE: Workaround because Lazy is unable to define filetypes for the htmx lsp via opts
 					-- source: https://github.com/ThePrimeagen/htmx-lsp/issues/47#issuecomment-1998661617
-					local lspconfig = require("lspconfig")
-					lspconfig.htmx.setup({
+					require("lspconfig").htmx.setup({
 						filetypes = {
-							"html",
 							"astro",
+							"html",
 							"javascriptreact",
 							"javascript.jsx",
+							"templ",
 							"typescriptreact",
 							"typescript.tsx",
 						},

@@ -215,6 +215,7 @@ return {
 
 					local key = '"__TEMPL_ATTR_EXPR_' .. abs_start_byte .. '__"'
 					local expr_text = capture.text:sub(attr_expr.rel_start_byte + 1, attr_expr.rel_end_byte)
+					expr_text = expr_text:gsub("%%", "%%%%") -- Escape % for gsub
 					attr_expr.key = key
 					attr_expr.expr_text = expr_text
 
