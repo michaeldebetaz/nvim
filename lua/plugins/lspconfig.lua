@@ -163,12 +163,6 @@ return {
 			},
 		})
 
-		-- LSP servers and clients are able to communicate to each other what features they support.
-		--  By default, Neovim doesn't support everything that is in the LSP specification.
-		--  When you add blink.cmp, luasnip, etc. Neovim now has *more* capabilities.
-		--  So, we create new capabilities with blink.cmp, and then broadcast that to the servers.
-		local capabilities = require("blink.cmp").get_lsp_capabilities()
-
 		local servers = {
 			bashls = {},
 			gopls = {},
@@ -179,19 +173,27 @@ return {
 			templ = {},
 			ts_ls = {},
 		}
-
 		-- You can add other tools here that you want Mason to install
 		-- for you, so that they are available from within Neovim.
 		local ensure_installed = vim.tbl_keys(servers or {})
 		vim.list_extend(ensure_installed, {
-			"stylua", -- Used to format lua code
 			"gofumpt",
 			"goimports",
+			"gopls",
 			"prettier",
 			"prettierd",
+			"pyright",
+			"stylua",
+			"tailwindcss",
 		})
 
 		require("mason-tool-installer").setup({ ensure_installed = ensure_installed })
+
+		-- LSP servers and clients are able to communicate to each other what features they support.
+		--  By default, Neovim doesn't support everything that is in the LSP specification.
+		--  When you add blink.cmp, luasnip, etc. Neovim now has *more* capabilities.
+		--  So, we create new capabilities with blink.cmp, and then broadcast that to the servers.
+		local capabilities = require("blink.cmp").get_lsp_capabilities()
 
 		require("mason-lspconfig").setup({
 			ensure_installed = {},
@@ -205,22 +207,57 @@ return {
 					-- certain features of an LSP (for example, turning off formatting for ts_ls)
 					server.capabilities = vim.tbl_deep_extend("force", {}, capabilities, server.capabilities or {})
 					require("lspconfig")[server_name].setup(server)
-
-					-- NOTE: Workaround because Lazy is unable to define filetypes for the htmx lsp via opts
-					-- source: https://github.com/ThePrimeagen/htmx-lsp/issues/47#issuecomment-1998661617
-					require("lspconfig").htmx.setup({
-						filetypes = {
-							"astro",
-							"html",
-							"javascriptreact",
-							"javascript.jsx",
-							"templ",
-							"typescriptreact",
-							"typescript.tsx",
-						},
-					})
 				end,
 			},
+		})
+
+		-- Add this right after require("mason-lspconfig").setup({ ... })
+		-- This forces Tailwind LSP to attach to Go files (Tailwind 4 compatible)
+		vim.api.nvim_create_autocmd("FileType", {
+			pattern = "go",
+			callback = function(args)
+				local client_name = "tailwindcss-go"
+
+				-- Check if tailwindcss is already attached
+				local clients = vim.lsp.get_clients({ bufnr = args.buf })
+				for _, client in ipairs(clients) do
+					if client.name == client_name then
+						return -- Already attached
+					end
+				end
+
+				local root_dir = vim.fs.root(args.buf, { "package.json", ".git", "go.mod" })
+
+				if root_dir then
+					vim.lsp.start({
+						name = client_name,
+						cmd = { "tailwindcss-language-server", "--stdio" },
+						root_dir = root_dir,
+						settings = {
+							tailwindCSS = {
+								experimental = {
+									classRegex = {
+										-- Match Gostar CLASS() method
+										[[CLASS\("([^"]*)"\)]],
+										[[CLASS\('([^']*)'\)]],
+										-- Match IfCLASS() method (second parameter)
+										[[IfCLASS\([^,]+,\s*"([^"]*)"\)]],
+										[[IfCLASS\([^,]+,\s*'([^"]*)'\)]],
+									},
+								},
+								includeLanguages = {
+									go = "html",
+								},
+							},
+						},
+						init_options = {
+							userLanguages = {
+								go = "html",
+							},
+						},
+					})
+				end
+			end,
 		})
 	end,
 }
