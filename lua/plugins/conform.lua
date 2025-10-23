@@ -53,14 +53,13 @@ return {
 
 		conform.formatters.prettierd_templ = {
 			format = function(_, ctx, _, _)
-				local prettierd_templ = require("utils.conform.prettier_templ")
 				local errors = vim.diagnostic.get(ctx.buf, { severity = vim.diagnostic.severity.ERROR })
 				if #errors > 0 then
 					vim.notify("Conform: prettier_templ formatting skipped due to LSP errors", vim.log.levels.WARN)
 				else
+					local prettierd_templ = require("utils.conform.prettier_templ")
 					local formatted = prettierd_templ.format_start_tags(ctx)
 					local formatted_lines = vim.split(formatted, "\n")
-
 					vim.api.nvim_buf_set_lines(ctx.buf, 0, -1, false, formatted_lines)
 				end
 
@@ -89,18 +88,22 @@ return {
 
 		conform.formatters.prettierd_gostar = {
 			format = function(_, ctx, _, _)
+				local errors = vim.diagnostic.get(ctx.buf, { severity = vim.diagnostic.severity.ERROR })
+				if #errors > 0 then
+					vim.notify("Conform: prettier_gostar formatting skipped due to LSP errors", vim.log.levels.WARN)
+				else
+					local prettied_gostar = require("utils.conform.prettierd_gostar")
+					local formatted = prettied_gostar.format_classes(ctx)
+					local formatted_lines = vim.split(formatted, "\n")
+					vim.api.nvim_buf_set_lines(ctx.buf, 0, -1, false, formatted_lines)
+				end
+
 				conform.format({
 					bufnr = ctx.buf,
 					formatters = { "gofumpt", "goimports" },
 					lsp_format = "fallback",
 					async = false,
 				})
-
-				local prettied_gostar = require("utils.conform.prettierd_gostar")
-				local formatted = prettied_gostar.format_classes(ctx)
-				local formatted_lines = vim.split(formatted, "\n")
-
-				vim.api.nvim_buf_set_lines(ctx.buf, 0, -1, false, formatted_lines)
 			end,
 		}
 

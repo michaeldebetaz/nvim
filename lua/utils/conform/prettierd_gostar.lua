@@ -94,12 +94,13 @@ function M.format_classes(ctx)
       (call_expression
         function:
           (selector_expression
-            field: (field_identifier) @identifier (#eq? @identifier "CLASS")
+            field: (field_identifier) @identifier
+              (#any-of? @identifier "CLASS" "IfCLASS")
         )
         arguments:
           (argument_list
             (interpreted_string_literal
-              (interpreted_string_literal_content) @class
+              (interpreted_string_literal_content) @content
             )
         )
       )
