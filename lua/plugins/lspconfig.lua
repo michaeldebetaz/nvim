@@ -216,7 +216,7 @@ return {
 		vim.api.nvim_create_autocmd("FileType", {
 			pattern = "go",
 			callback = function(args)
-				local client_name = "tailwindcss-go"
+				local client_name = "tailwindcss"
 
 				-- Check if tailwindcss is already attached
 				local clients = vim.lsp.get_clients({ bufnr = args.buf })
@@ -248,11 +248,6 @@ return {
 								includeLanguages = {
 									go = "html",
 								},
-							},
-						},
-						init_options = {
-							userLanguages = {
-								go = "html",
 							},
 						},
 					})
