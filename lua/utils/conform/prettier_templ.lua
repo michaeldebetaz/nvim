@@ -1,3 +1,4 @@
+---@module "conform"
 local utils = require("utils.conform")
 
 local M = {}
@@ -39,7 +40,7 @@ end
 
 ---@param filename string
 ---@param text string
----@return string formatted_text
+---@return string
 local function run_prettierd(filename, text)
 	-- Make sure prettierd is executed inside the templ project directory
 	local project_root = vim.fs.root(filename, { "package.json", "node_modules" })
@@ -66,7 +67,7 @@ local function run_prettierd(filename, text)
 end
 
 ---@param ctx conform.Context
----@return string formatted_text
+---@return string
 function M.format_start_tags(ctx)
 	local lines = vim.api.nvim_buf_get_lines(ctx.buf, 0, -1, false)
 	local text = table.concat(lines, "\n")

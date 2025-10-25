@@ -1,5 +1,5 @@
+---@module "conform"
 local utils = require("utils.conform")
-require("conform")
 
 local M = {}
 

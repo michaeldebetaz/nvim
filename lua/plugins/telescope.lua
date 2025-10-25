@@ -1,5 +1,4 @@
--- Fuzzy Finder (files, lsp, etc)
-return {
+return { -- Fuzzy Finder (files, lsp, etc)
 	"nvim-telescope/telescope.nvim",
 	event = "VimEnter",
 	dependencies = {
@@ -56,10 +55,13 @@ return {
 				},
 			},
 			extensions = {
-				["ui-select"] = { require("telescope.themes").get_dropdown() },
+				["ui-select"] = {
+					require("telescope.themes").get_dropdown(),
+				},
 			},
 		})
 
+		-- Enable Telescope extensions if they are installed
 		pcall(require("telescope").load_extension, "fzf")
 		pcall(require("telescope").load_extension, "ui-select")
 
@@ -100,8 +102,7 @@ return {
 		local action_state = require("telescope.actions.state")
 		local actions = require("telescope.actions")
 
-		local buffer_searcher
-		buffer_searcher = function()
+		local function buffer_searcher()
 			builtin.buffers({
 				sort_mru = true,
 				ignore_current_buffer = true,
