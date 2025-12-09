@@ -9,6 +9,7 @@ return {
 			"c",
 			"diff",
 			"go",
+			"gotmpl",
 			"html",
 			"javascript",
 			"lua",

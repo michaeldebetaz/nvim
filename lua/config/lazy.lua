@@ -19,6 +19,8 @@ end
 
 require("globals")
 
+require("filetypes")
+
 require("options")
 
 require("keymaps")
