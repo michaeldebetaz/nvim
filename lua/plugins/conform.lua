@@ -86,13 +86,13 @@ return {
 			end,
 		})
 
-		conform.formatters.prettierd_gostar = {
+		conform.formatters.prettierd_speckles = {
 			format = function(_, ctx, _, _)
 				local errors = vim.diagnostic.get(ctx.buf, { severity = vim.diagnostic.severity.ERROR })
 				if #errors > 0 then
-					vim.notify("Conform: prettier_gostar formatting skipped due to LSP errors", vim.log.levels.WARN)
+					vim.notify("Conform: prettier_speckles formatting skipped due to LSP errors", vim.log.levels.WARN)
 				else
-					local prettied_gostar = require("utils.conform.prettierd_gostar")
+					local prettied_gostar = require("utils.conform.prettierd_speckles")
 					local formatted = prettied_gostar.format_classes(ctx)
 					local formatted_lines = vim.split(formatted, "\n")
 					vim.api.nvim_buf_set_lines(ctx.buf, 0, -1, false, formatted_lines)
@@ -113,7 +113,7 @@ return {
 			callback = function(args)
 				conform.format({
 					bufnr = args.buf,
-					formatters = { "prettierd_gostar" },
+					formatters = { "prettierd_speckles" },
 					lsp_format = "fallback",
 					async = true,
 				})
