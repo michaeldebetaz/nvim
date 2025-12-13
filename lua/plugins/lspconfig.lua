@@ -243,12 +243,12 @@ return {
 							tailwindCSS = {
 								experimental = {
 									classRegex = {
-										-- Match Gostar CLASS() method
-										[[CLASS\("([^"]*)"\)]],
-										[[CLASS\('([^']*)'\)]],
-										-- Match Gostar IfCLASS() method (second parameter)
-										[[IfCLASS\([^,]+,\s*"([^"]*)"\)]],
-										[[IfCLASS\([^,]+,\s*'([^"]*)'\)]],
+										-- Match Speckles Class() method
+										[[Class\("([^"]*)"\)]],
+										[[Class\('([^']*)'\)]],
+										-- Match Speckles IfClass() method (second parameter)
+										[[IfClass\([^,]+,\s*"([^"]*)"\)]],
+										[[IfClass\([^,]+,\s*'([^"]*)'\)]],
 									},
 								},
 								includeLanguages = {
