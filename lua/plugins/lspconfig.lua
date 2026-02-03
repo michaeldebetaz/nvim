@@ -217,48 +217,46 @@ return {
 			},
 		})
 
-		-- Add this right after require("mason-lspconfig").setup({ ... })
-		-- This forces Tailwind LSP to attach to Go files (Tailwind 4 compatible)
-		vim.api.nvim_create_autocmd("FileType", {
-			pattern = "go",
-			callback = function(args)
-				local client_name = "go-tailwindcss"
-
-				-- Check if tailwindcss is already attached
-				local clients = vim.lsp.get_clients({ bufnr = args.buf })
-				for _, client in ipairs(clients) do
-					if client.name == client_name then
-						return -- Already attached
-					end
-				end
-
-				local root_dir = vim.fs.root(args.buf, { "package.json", ".git", "go.mod" })
-
-				if root_dir then
-					vim.lsp.start({
-						name = client_name,
-						cmd = { "tailwindcss-language-server", "--stdio" },
-						root_dir = root_dir,
-						settings = {
-							tailwindCSS = {
-								experimental = {
-									classRegex = {
-										-- Match Speckles Class() method
-										[[Class\("([^"]*)"\)]],
-										[[Class\('([^']*)'\)]],
-										-- Match Speckles IfClass() method (second parameter)
-										[[IfClass\([^,]+,\s*"([^"]*)"\)]],
-										[[IfClass\([^,]+,\s*'([^"]*)'\)]],
-									},
-								},
-								includeLanguages = {
-									go = "html",
-								},
-							},
-						},
-					})
-				end
-			end,
-		})
+		-- vim.api.nvim_create_autocmd("FileType", {
+		-- 	pattern = "go",
+		-- 	callback = function(args)
+		-- 		local client_name = "go-tailwindcss"
+		--
+		-- 		-- Check if tailwindcss is already attached
+		-- 		local clients = vim.lsp.get_clients({ bufnr = args.buf })
+		-- 		for _, client in ipairs(clients) do
+		-- 			if client.name == client_name then
+		-- 				return -- Already attached
+		-- 			end
+		-- 		end
+		--
+		-- 		local root_dir = vim.fs.root(args.buf, { "package.json", ".git", "go.mod" })
+		--
+		-- 		if root_dir then
+		-- 			vim.lsp.start({
+		-- 				name = client_name,
+		-- 				cmd = { "tailwindcss-language-server", "--stdio" },
+		-- 				root_dir = root_dir,
+		-- 				settings = {
+		-- 					tailwindCSS = {
+		-- 						experimental = {
+		-- 							classRegex = {
+		-- 								-- Match Speckles Class() method
+		-- 								[[Class\("([^"]*)"\)]],
+		-- 								[[Class\('([^']*)'\)]],
+		-- 								-- Match Speckles IfClass() method (second parameter)
+		-- 								[[IfClass\([^,]+,\s*"([^"]*)"\)]],
+		-- 								[[IfClass\([^,]+,\s*'([^"]*)'\)]],
+		-- 							},
+		-- 						},
+		-- 						includeLanguages = {
+		-- 							go = "html",
+		-- 						},
+		-- 					},
+		-- 				},
+		-- 			})
+		-- 		end
+		-- 	end,
+		-- })
 	end,
 }
