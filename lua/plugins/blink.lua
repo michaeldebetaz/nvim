@@ -19,6 +19,7 @@ return { -- Autocompletion
 			opt = {},
 		},
 		"folke/lazydev.nvim",
+		"brenoprata10/nvim-highlight-colors",
 	},
 
 	--- @module "blink.cmp"
