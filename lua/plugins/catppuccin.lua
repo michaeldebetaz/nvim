@@ -1,10 +1,14 @@
 return {
-	-- Theme Catppuccin
 	"catppuccin/nvim",
 	name = "catppuccin",
 	priority = 1000,
 	opts = {
 		flavour = "mocha",
+		styles = {
+			syntax = {
+				old_colors = true,
+			},
+		},
 		highlight_overrides = {
 			mocha = function()
 				return {

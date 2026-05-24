@@ -180,6 +180,28 @@ return {
 		--        For example, to see the options for `lua_ls`, you could go to: https://luals.github.io/wiki/settings/
 		local servers = {
 			bashls = {},
+			cssls = {},
+			css_variables = {
+				settings = {
+					cssVariables = {
+						blacklistFolders = {
+							"**/.cache",
+							"**/.DS_Store",
+							"**/.git",
+							"**/.hg",
+							"**/.next",
+							"**/.svn",
+							"**/bower_components",
+							"**/CVS",
+							"**/dist",
+							"**/node_modules",
+							"**/tests",
+							"**/tmp",
+						},
+						lookupFiles = { "**/*.css" },
+					},
+				},
+			},
 			gopls = {},
 			html = {},
 			lua_ls = { settings = { Lua = { completion = { callSnippet = "Replace" } } } },
