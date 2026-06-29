@@ -1,7 +1,17 @@
 -- [[ Kickstart's Setting Options ]]
 -- See `:help vim.o`
--- NOTE: You can change these options as you wish!
---  For more options, you can see `:help option-list`
+--
+-- Enable faster startup by caching compiled Lua modules
+vim.loader.enable()
+
+-- Set <space> as the leader key
+-- See `:help mapleader`
+--  NOTE: Must happen before plugins are required (otherwise wrong leader will be used)
+vim.g.mapleader = " "
+vim.g.maplocalleader = " "
+
+-- Set to true if you have a Nerd Font installed and selected in the terminal
+vim.g.have_nerd_font = true
 
 -- Make line numbers default
 vim.o.number = true
@@ -90,7 +100,7 @@ vim.o.confirm = false
 -- vim.opt.listchars = { tab = "┊ ", trail = "·", nbsp = "␣" }
 
 -- Set highlight on search
-vim.o.hlsearch = false
+-- vim.o.hlsearch = false
 
 -- Set completeopt to have a better completion experience
 vim.o.completeopt = "menuone,noselect"

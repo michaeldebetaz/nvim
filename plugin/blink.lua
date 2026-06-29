@@ -1,30 +1,11 @@
-return { -- Autocompletion
-	"saghen/blink.cmp",
-	event = "VimEnter",
-	version = "1.*",
-	dependencies = {
-		-- Snippet Engine
-		{
-			"L3MON4D3/LuaSnip",
-			version = "2.*",
-			build = (function()
-				-- Build Step is needed for regex support in snippets.
-				-- This step is not supported in many windows environments.
-				-- Remove the below condition to re-enable on windows.
-				if vim.fn.has("win32") == 1 or vim.fn.executable("make") == 0 then
-					return
-				end
-				return "make install_jsregexp"
-			end)(),
-			opt = {},
-		},
-		"folke/lazydev.nvim",
-	},
-
-	--- @module "blink.cmp"
-	--- @type blink.cmp.Config
-	opts = {
-		keymap = {
+-- Autocompletion
+vim.pack.add({
+	{ src = "https://github.com/saghen/blink.cmp",
+		version = vim.version.range("1.*")
+	}
+})
+require("blink.cmp").setup({
+	keymap = {
 			-- 'default' (recommended) for mappings similar to built-in completions
 			--   <c-y> to accept ([y]es) the completion.
 			--    This will auto-import if your LSP supports it.
@@ -65,10 +46,7 @@ return { -- Autocompletion
 		},
 
 		sources = {
-			default = { "lsp", "path", "snippets", "lazydev" },
-			providers = {
-				lazydev = { module = "lazydev.integrations.blink", score_offset = 100 },
-			},
+			default = { "lsp", "path", "snippets" },
 		},
 
 		snippets = { preset = "luasnip" },
@@ -84,5 +62,4 @@ return { -- Autocompletion
 
 		-- Shows a signature help window while you type arguments for a function
 		signature = { enabled = true },
-	},
-}
+})
