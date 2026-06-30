@@ -9,4 +9,4 @@ require("catppuccin").setup({
 		end,
 	},
 })
-vim.cmd.colorscheme("catppuccin")
+vim.cmd.colorscheme("catppuccin-nvim")

@@ -1,6 +1,3 @@
--- [[ Configure Treesitter ]]
---  Used to highlight, edit, and navigate code
---
 --  See `:help nvim-treesitter-intro`
 vim.pack.add({
 	{
