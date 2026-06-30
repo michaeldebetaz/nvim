@@ -107,7 +107,13 @@ function M.format_classes(ctx)
     ]]
 	)
 
-	---@type PrettierdGostarCapture[]
+	---@class PrettierdSpecklesCapture
+	---@field start_byte integer
+	---@field end_byte integer
+	---@field class string
+	---@field formatted_class string
+
+	---@type PrettierdSpecklesCapture[]
 	local captures = {}
 
 	for _, node in query:iter_captures(root, ctx.buf) do
@@ -115,7 +121,7 @@ function M.format_classes(ctx)
 			local _, _, start_byte, _, _, end_byte = node:range(true)
 			local node_text = vim.treesitter.get_node_text(node, ctx.buf)
 
-			---@type PrettierdGostarCapture
+			---@type PrettierdSpecklesCapture
 			local capture = {
 				start_byte = start_byte,
 				end_byte = end_byte,
@@ -171,9 +177,3 @@ function M.format_classes(ctx)
 end
 
 return M
-
----@class PrettierdGostarCapture
----@field start_byte integer
----@field end_byte integer
----@field class string
----@field formatted_class string

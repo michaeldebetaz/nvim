@@ -1,9 +1,6 @@
 vim.pack.add({ "https://github.com/catppuccin/nvim" })
 require("catppuccin").setup({
 	flavour = "mocha",
-	styles = {
-		syntax = { old_colors = true },
-	},
 	highlight_overrides = {
 		mocha = function()
 			return {

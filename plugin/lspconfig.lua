@@ -200,11 +200,8 @@ vim.list_extend(ensure_installed, {
 	"prettier",
 	"prettierd",
 	"stylua",
+	"tailwindcss-language-server",
 })
-vim.list_extend(ensure_installed, {
-	-- You can add other tools here that you want Mason to install
-})
-
 require("mason-tool-installer").setup({ ensure_installed = ensure_installed })
 
 for name, server in pairs(servers) do
@@ -216,7 +213,6 @@ vim.api.nvim_create_autocmd("FileType", {
 	pattern = "go",
 	callback = function(args)
 		local client_name = "go-tailwindcss"
-
 		-- Check if tailwindcss is already attached
 		local clients = vim.lsp.get_clients({ bufnr = args.buf })
 		for _, client in ipairs(clients) do
@@ -226,7 +222,6 @@ vim.api.nvim_create_autocmd("FileType", {
 		end
 
 		local root_dir = vim.fs.root(args.buf, { "package.json", ".git", "go.mod" })
-
 		if root_dir then
 			vim.lsp.start({
 				name = client_name,
@@ -244,9 +239,7 @@ vim.api.nvim_create_autocmd("FileType", {
 								[[IfClass\([^,]+,\s*'([^"]*)'\)]],
 							},
 						},
-						includeLanguages = {
-							go = "html",
-						},
+						includeLanguages = { go = "html" },
 					},
 				},
 			})
