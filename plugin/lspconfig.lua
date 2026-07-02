@@ -165,12 +165,12 @@ local servers = {
 				format = { enable = false }, -- Disable formatting (formatting is done by stylua)
 			},
 		},
-		pyright = { settings = { python = { analysis = { autoSearchPaths = true } } } },
-		stylua = {}, -- Used to format Lua code
-		tailwindcss = {},
-		templ = {},
-		ts_ls = {},
 	},
+	pyright = { settings = { python = { analysis = { autoSearchPaths = true } } } },
+	stylua = {}, -- Used to format Lua code
+	tailwindcss = {},
+	templ = {},
+	ts_ls = {},
 }
 
 vim.pack.add({
