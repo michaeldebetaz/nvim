@@ -166,11 +166,10 @@ local servers = {
 			},
 		},
 		pyright = { settings = { python = { analysis = { autoSearchPaths = true } } } },
+		stylua = {}, -- Used to format Lua code
 		tailwindcss = {},
 		templ = {},
 		ts_ls = {},
-
-		stylua = {}, -- Used to format Lua code
 	},
 }
 
