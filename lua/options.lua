@@ -28,17 +28,18 @@ vim.o.showmode = false
 --  Schedule the setting after `UiEnter` because it can increase startup-time.
 --  Remove this option if you want your OS clipboard to remain independent.
 --  See `:help 'clipboard'`
+local osc52 = require("vim.ui.clipboard.osc52")
 vim.schedule(function()
 	if vim.fn.has("wsl") == 1 then
 		vim.g.clipboard = {
-			name = "WslClipboard",
+			name = "OSC 52",
 			copy = {
 				["+"] = "clip.exe",
 				["*"] = "clip.exe",
 			},
 			paste = {
-				["+"] = 'powershell.exe -NoLogo -NoProfile -c [Console]::Out.Write($(Get-Clipboard -Raw).tostring().replace("`r", ""))',
-				["*"] = 'powershell.exe -NoLogo -NoProfile -c [Console]::Out.Write($(Get-Clipboard -Raw).tostring().replace("`r", ""))',
+				["+"] = osc52.paste("+"),
+				["*"] = osc52.paste("*"),
 			},
 			cache_enabled = 0,
 		}
@@ -78,7 +79,7 @@ vim.o.splitbelow = true
 --   See `:help lua-options`
 --   and `:help lua-options-guide`
 vim.o.list = true
-vim.opt.listchars = { tab = "» ", trail = "·", nbsp = "␣" }
+vim.opt.listchars = { tab = "» ", leadmultispace = "» ", trail = "·", nbsp = "␣" }
 
 -- Preview substitutions live, as you type!
 vim.o.inccommand = "split"

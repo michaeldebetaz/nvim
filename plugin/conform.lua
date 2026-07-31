@@ -26,7 +26,7 @@ require("conform").setup({
 		javascriptreact = { "prettierd", "prettier", stop_after_first = true },
 		json = { "prettierd", "prettier", stop_after_first = true },
 		lua = { "stylua" },
-		python = { "isort", "black" },
+		python = { "ruff_import", "ruff_format" },
 		sh = { "shfmt" },
 		sql = { "sleek" },
 		templ = { "templ" },
