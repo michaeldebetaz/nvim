@@ -181,7 +181,7 @@ local servers = {
 						-- reportUnknownVariableType = false,
 						reportUnusedCallResult = false,
 					},
-					extraPaths = { "." },
+					-- extraPaths = { "." },
 				},
 			},
 		},
