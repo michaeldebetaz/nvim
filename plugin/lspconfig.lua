@@ -143,7 +143,8 @@ local servers = {
 				end
 			end
 
-			client.config.settings.Lua = vim.tbl_deep_extend("force", client.config.settings.Lua, {
+			local current_settings = client.config.settings --[[@as lspconfig.settings.lua_ls]]
+			client.config.settings.Lua = vim.tbl_deep_extend("force", current_settings.Lua, {
 				runtime = {
 					version = "LuaJIT",
 					path = { "lua/?.lua", "lua/?/init.lua" },
@@ -152,10 +153,7 @@ local servers = {
 					checkThirdParty = false,
 					-- NOTE: this is a lot slower and will cause issues when working on your own configuration.
 					--  See https://github.com/neovim/nvim-lspconfig/issues/3189
-					library = vim.tbl_extend("force", vim.api.nvim_get_runtime_file("", true), {
-						"${3rd}/luv/library",
-						"${3rd}/busted/library",
-					}),
+					library = vim.api.nvim_get_runtime_file("", true),
 				},
 			})
 		end,
@@ -166,8 +164,28 @@ local servers = {
 			},
 		},
 	},
-	pyright = { settings = { python = { analysis = { autoSearchPaths = true } } } },
-	stylua = {}, -- Used to format Lua code
+	basedpyright = {
+		settings = {
+			basedpyright = {
+				analysis = {
+					autoSearchPath = true,
+					useLibraryCodeForTypes = true,
+					typeCheckingMode = "all",
+					diagnosticSeverityOverrides = {
+						reportAny = false,
+						-- reportMissingTypeArgument = false,
+						-- reportMissingTypeStubs = false,
+						-- reportUnknownArgumentType = false,
+						-- reportUnknownMemberType = false,
+						-- reportUnknownParameterType = false,
+						-- reportUnknownVariableType = false,
+						reportUnusedCallResult = false,
+					},
+					extraPaths = { "." },
+				},
+			},
+		},
+	},
 	tailwindcss = {},
 	templ = {},
 	ts_ls = {},
@@ -197,7 +215,6 @@ vim.list_extend(ensure_installed, {
 	"prettier",
 	"prettierd",
 	"stylua",
-	"tailwindcss-language-server",
 })
 require("mason-tool-installer").setup({ ensure_installed = ensure_installed })
 
