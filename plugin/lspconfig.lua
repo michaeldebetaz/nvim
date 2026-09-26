@@ -2,6 +2,9 @@
 vim.pack.add({ "https://github.com/j-hui/fidget.nvim" })
 require("fidget").setup({})
 
+-- Useful schemas for JSON, CUE, YAML, and TOML files.
+vim.pack.add({ "https://github.com/b0o/schemastore.nvim" })
+
 --  This function gets run when an LSP attaches to a particular buffer.
 --    That is to say, every time a new file is opened that is associated with
 --    an lsp (for example, opening `main.rs` is associated with `rust_analyzer`)
