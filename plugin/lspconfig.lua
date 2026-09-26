@@ -104,6 +104,29 @@ vim.api.nvim_create_autocmd("LspAttach", {
 --  See `:help lsp-config` for information about keys and how to configure
 ---@type table<string, vim.lsp.Config>
 local servers = {
+	basedpyright = {
+		settings = {
+			basedpyright = {
+				analysis = {
+					autoSearchPath = true,
+					useLibraryCodeForTypes = true,
+					typeCheckingMode = "all",
+					diagnosticSeverityOverrides = {
+						reportAny = false,
+						-- reportMissingTypeArgument = false,
+						reportMissingTypeStubs = false,
+						-- reportUnknownArgumentType = false,
+						reportUnknownMemberType = false,
+						-- reportUnknownParameterType = false,
+						reportUnknownVariableType = false,
+						reportUnusedCallResult = false,
+						reportExplicitAny = false,
+					},
+					-- extraPaths = { "." },
+				},
+			},
+		},
+	},
 	bashls = {},
 	cssls = {},
 	css_variables = {
@@ -129,6 +152,14 @@ local servers = {
 	},
 	gopls = {},
 	html = {},
+	jsonls = {
+		settings = {
+			json = {
+				schemas = require("schemastore").json.schemas(),
+				validate = { enable = true },
+			},
+		},
+	},
 	lua_ls = {
 		on_init = function(client)
 			client.server_capabilities.documentFormattingProvider = false -- Disable formatting (formatting is done by stylua)
@@ -161,28 +192,6 @@ local servers = {
 		settings = {
 			Lua = {
 				format = { enable = false }, -- Disable formatting (formatting is done by stylua)
-			},
-		},
-	},
-	basedpyright = {
-		settings = {
-			basedpyright = {
-				analysis = {
-					autoSearchPath = true,
-					useLibraryCodeForTypes = true,
-					typeCheckingMode = "all",
-					diagnosticSeverityOverrides = {
-						reportAny = false,
-						-- reportMissingTypeArgument = false,
-						-- reportMissingTypeStubs = false,
-						-- reportUnknownArgumentType = false,
-						-- reportUnknownMemberType = false,
-						-- reportUnknownParameterType = false,
-						-- reportUnknownVariableType = false,
-						reportUnusedCallResult = false,
-					},
-					-- extraPaths = { "." },
-				},
 			},
 		},
 	},
