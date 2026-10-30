@@ -111,21 +111,23 @@ local servers = {
 		settings = {
 			basedpyright = {
 				analysis = {
-					autoSearchPath = true,
+					-- Only check files you currently have open in buffer
+					diagnosticMode = "openFilesOnly",
+					-- Avoid deep scanning un-annotated third-party packages in .venv
 					useLibraryCodeForTypes = true,
-					typeCheckingMode = "all",
+					autoSearchPaths = true,
+					typeCheckingMode = "standard",
 					diagnosticSeverityOverrides = {
 						reportAny = false,
-						-- reportMissingTypeArgument = false,
 						reportMissingTypeStubs = false,
-						-- reportUnknownArgumentType = false,
 						reportUnknownMemberType = false,
-						-- reportUnknownParameterType = false,
 						reportUnknownVariableType = false,
 						reportUnusedCallResult = false,
 						reportExplicitAny = false,
+						-- Disable rules handled faster by Ruff
+						reportUnusedImport = "none",
+						reportUnusedVariable = "none",
 					},
-					-- extraPaths = { "." },
 				},
 			},
 		},
